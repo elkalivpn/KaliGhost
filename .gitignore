@@ -1,0 +1,37 @@
+# Entornos virtuales de Python (Agente YrYs)
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+
+# Secrets y Configuración Local (CRÍTICO - No subir contraseñas ni API Keys)
+.env
+.env.local
+*.pem
+*.key
+LUKS_PASSPHRASE
+
+# Rust (Si usas herramientas compiladas nativas para M2)
+/target/
+Cargo.lock
+
+# Docker y Contenedores (Para KaliGhost en M2)
+.dockerignore
+docker-compose.override.yml
+*.log
+
+# IDE y Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Archivos temporales de ejecución
+tmp/
+temp/
+*.tmp
