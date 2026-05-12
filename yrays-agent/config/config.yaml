@@ -1,0 +1,98 @@
+# Configuración del Agente YrYs (YrYs-Agent)
+# Este archivo define el comportamiento, habilidades y entorno del agente de IA dentro de KaliGhost.
+
+agent:
+  # Nombre del agente de IA
+  name: "YrYs"
+
+  # Rol y propósito
+  role: "Asistente de Pentesting Autónomo"
+  mission: |
+    Ser un agente de inteligencia artificial proactivo y ético para pruebas de penetración.
+    Debe operar con máxima autonomía, tomar decisiones informadas y crear sus propias
+    herramientas (skills) para adaptarse a los entornos objetivo de manera responsable.
+
+  # Nivel de autonomía
+  # 0 = Reactivo (requiere comando humano para cada acción)
+  # 1 = Semi-autónomo (toma decisiones en tareas definidas)
+  # 2 = Autónomo (toma la iniciativa y define sus propias tareas)
+  autonomy: 2
+
+  # Configuración de seguridad (Modo Fantasma)
+  ghost_mode: true
+  # En este modo, todas las acciones, logs y datos generados durante una sesión
+  # son cifrados en memoria y eliminados completamente al cerrar el contenedor.
+  ghost_mode_crypt_key: "auto" # Genera una clave efímera por sesión (recomendado)
+
+skills:
+  # Ruta donde se almacenan las skills dinámicas creadas por el agente.
+  # Cuando ghost_mode está activo, este directorio se monta como tmpfs (en memoria RAM).
+  directory: "/root/work/yrays-agent/skills"
+  # Si ghost_mode es false, se puede montar desde un almacenamiento persistente cifrado.
+  # directory: "/mnt/persistent/skills"
+
+  # Política de creación de skills
+  # Define si el agente puede crear nuevas skills automáticamente.
+  # - manual: Solo se permiten skills predefinidas en la imagen.
+  # - dynamic: El agente puede crear y modificar skills.
+  #   - safety_level: 0 = Sin verificación, 1 = Review del código antes de ejecutar, 2 = Full sandbox.
+  creation_policy: "dynamic"
+  safety_level: 1 # El código generado se revisará antes de ejecutarse
+
+logging:
+  # Directorio de logs (si ghost_mode es false, podría ir a un disco cifrado)
+  directory: "/root/work/yrays-agent/logs"
+  # Nivel de detalle del log
+  # - error: Solo errores fatales
+  # - warn: Advertencias importantes
+  # - info: Información general
+  # - debug: Debug detallado
+  level: "info"
+
+# Configuración del modelo de IA (Integración con el host)
+# El agente YrYs no carga un modelo pesado; en su lugar, se comunica con el
+# modelo más poderoso en el host (el MacBook) a través de una API.
+ai_api:
+  # La URL base para comunicarse con el modelo del host.
+  # El agente puede usar esta API para tareas que requieran gran capacidad cognitiva.
+  # El host debe exponer una API REST/SSE que este agente pueda consumir.
+  base_url: "http://172.17.0.1:8080" # IP de la host (Docker host) y puerto del servicio
+  # Asegúrate de que el contenedor tenga acceso a esta IP en la red bridge predeterminada.
+
+  # Clave de API para autenticar las solicitudes (recomendado usar claves efímeras)
+  api_key: "auto" # Se genera una clave nueva cada vez que se inicia el contenedor en modo fantasma
+
+  # Timeout para las solicitudes en segundos
+  timeout: 30
+
+# Herramientas del sistema permitidas (ACL - Lista de Control de Acceso)
+# Esto limita las herramientas que el agente puede invocar, para prevenir acciones peligrosas.
+acl:
+  # Herramientas permitidas con comandos específicos
+  allowed_tools:
+    - name: "nmap"
+      args: ["-sV", "-p", "1-1000", "--script=vuln"] # Permite solo escaneos de versión y de vulnerabilidades
+    - name: "nikto"
+      args: ["-h"] # Permite escanear un host específico
+    - name: "curl"
+      args: ["-s", "-I"] # Permite solo solicitudes silenciosas para obtener headers
+    - name: "dig"
+      args: ["ANY", "NS"] # Permite solo consultas de dns básicas
+
+  # Lista de herramientas explícitamente prohibidas, incluso si están en el sistema
+  blocked_tools:
+    - "metasploit"
+    - "sqlmap"
+    - "hydra"
+    - "crackmapexec"
+    - "msfconsole"
+    - "sudo"
+    - "rm"
+    - "dd"
+    - "wget" # Prohibido para prevenir descarga de malware desconocido
+
+  # Regla de acceso a red
+  # - internal_only: Solo acceso a la red del contenedor y al host
+  # - external_only: Solo acceso a internet (recomendado para modo fantasma)
+  # - mixed: Acceso a ambos
+  network_policy: "external_only"

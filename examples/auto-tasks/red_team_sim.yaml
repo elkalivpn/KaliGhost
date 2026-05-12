@@ -1,0 +1,19 @@
+# Red Team Simulation – Ejemplo AUTO task
+task:
+  name: "apt_simulation"
+  description: "Simulación APT con YrYs-Agent autónomo"
+  agent_mode: "AUTO"
+  rules_of_engagement:
+    scope: "192.168.1.0/24"
+    allowed_techniques: ["phishing", "lateral", "exfil"]
+    prohibited: ["dos", "wiper", "ransomware"]
+  steps:
+    - tool: social_phisher
+      args: ["--template", "templates/company_email.html"]
+    - tool: impacket_secretsdump
+      args: ["-target", "$scope"]
+    - tool: custom_exfil
+      args: ["--dry-run"]
+  reporting:
+    format: "json"
+    path: "/root/work/reports/apt_sim_$(date +%Y%m%d).json"

@@ -8,30 +8,85 @@ __pycache__/
 .Python
 env/
 
-# Secrets y Configuración Local (CRÍTICO - No subir contraseñas ni API Keys)
+# Archivos de cobertura de tests
+.coverage
+htmlcov/
+.coverage.*
+.pytest_cache/
+
 .env
 .env.local
+.env.*.local
 *.pem
 *.key
 LUKS_PASSPHRASE
-
-# Rust (Si usas herramientas compiladas nativas para M2)
-/target/
-Cargo.lock
+secrets.json
+secrets.yaml
+auth.json
 
 # Docker y Contenedores (Para KaliGhost en M2)
 .dockerignore
 docker-compose.override.yml
 *.log
+work/logs/
+work/.docker/
 
 # IDE y Editor
 .idea/
 .vscode/
 *.swp
 *.swo
+*.swo
 .DS_Store
 
-# Archivos temporales de ejecución
 tmp/
 temp/
 *.tmp
+
+# Archivos generados por el agente (runtime)
+YrYs-Agent/logs/*
+!YrYs-Agent/logs/.gitkeep
+YrYs-Agent/cache/
+YrYs-Agent/checkpoints/
+YrYs-Agent/state.db*
+YrYs-Agent/.ya?*
+
+# Backups y state (excepto .gitignore)
+backups/
+*.backup
+
+config.local.yaml
+config.secrets.yaml
+
+# Archivos de credential vault (keepass, etc)
+*.kdbx
+*.keychain
+
+# macOS
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node (si usas frontend tooling)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Rust
+/target/
+Cargo.lock
+
+# Yarn
+.yarn/
+.yarnrc.yml
+.pnp.*
+
+# Caches
+.cache/
+.conda/

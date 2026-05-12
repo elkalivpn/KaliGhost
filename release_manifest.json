@@ -1,0 +1,118 @@
+{
+  "release": {
+    "version": "v1.0.0",
+    "name": "KaliGhost - Pentesting Autónomo con IA",
+    "date": "2026-05-12",
+    "description": "Sistema completo de pentesting portátil para Mac M2 con agente IA autónomo YrYs, modo AUTO, y landing page monetizada",
+    "channels": {
+      "github": "https://github.com/elkalivpn/KaliGhost",
+      "telegram": "https://t.me/elkalivpn",
+      "gumroad_starter": "https://gumroad.com/l/tu-producto-starter",
+      "gumroad_pro": "https://gumroad.com/l/tu-producto-pro",
+      "gumroad_enterprise": "https://gumroad.com/l/tu-producto-enterprise"
+    },
+    "components": {
+      "agent": {
+        "path": "YrYs-Agent/",
+        "description": "Agente IA autónomo con modo AUTO por default",
+        "files": [
+          "yrays_config.yaml - Configuración completa",
+          "agent.py - Cerebro del agente (pendiente)",
+          "AUTO_MODE.md - Script AWS auto-deploy",
+          "CORE_PRINCIPLES.md - Filosofía de operación"
+        ]
+      },
+      "web": {
+        "path": "web_monetizacion/",
+        "description": "Landing page cyberpunk con 3 planes de pricing",
+        "files": [
+          "index.html - Página principal con CTA Gumroad",
+          "css/style.css - Estilos profesionales",
+          "js/main.js - Interactividad"
+        ]
+      },
+      "docker": {
+        "path": "boot/",
+        "description": "Script de arranque para Docker en macOS/Linux",
+        "files": [
+          "boot.sh - Inicializa contenedor Kali Linux",
+          "docker-compose.yml generado automáticamente"
+        ]
+      },
+      "aws": {
+        "path": "scripts/",
+        "description": "Integración AWS para infraestructura autónoma",
+        "files": [
+          "ghost_ai.py - Script de automatización AWS"
+        ]
+      }
+    },
+    "pricing": {
+      "starter": {
+        "price": 49,
+        "currency": "USD",
+        "license": "perpetua",
+        "features": [
+          "Script base boot.sh",
+          "Imagen Kali Linux oficial",
+          "Documentación básica",
+          "Comunidad Discord"
+        ],
+        "gumroad": "https://gumroad.com/l/tu-producto-starter"
+      },
+      "pro": {
+        "price": 99,
+        "currency": "USD",
+        "license": "anual",
+        "features": [
+          "Todo lo de Starter",
+          "Ghost AI v2.0 integrado",
+          "API de IA (GPT-4)",
+          "5 exploits personalizados",
+          "Soporte email 48h"
+        ],
+        "gumroad": "https://gumroad.com/l/tu-producto-pro"
+      },
+      "enterprise": {
+        "price": 149,
+        "currency": "USD",
+        "license": "12 meses",
+        "features": [
+          "Todo lo de Pro",
+          "Modelos IA ilimitados (GPT-4, DeepSeek, Qwen)",
+          "50+ scripts automatización",
+          "Soporte prioritario 24/7",
+          "Formación 8h ciberseguridad"
+        ],
+        "gumroad": "https://gumroad.com/l/tu-producto-enterprise"
+      }
+    },
+    "requirements": {
+      "os": ["macOS 11+ (Intel/Apple Silicon)", "Linux (Ubuntu, Debian, Kali)"],
+      "docker": "Docker Desktop o Docker Engine",
+      "memory": "4GB RAM mínimo (8GB recomendado)",
+      "storage": "20GB espacio en disco",
+      "network": "Conectividad a internet para módulos IA"
+    },
+    "installation": [
+      "git clone https://github.com/elkalivpn/KaliGhost.git",
+      "cd KaliGhost",
+      "chmod +x boot/boot.sh",
+      "./boot/boot.sh",
+      "Acceder: docker exec -it kali-ghost bash"
+    ],
+    "quickstart": [
+      "docker ps - ver contenedor activo",
+      "docker exec -it kali-ghost bash - acceder shell",
+      "cd /root/work - scripts disponibles",
+      "yr-ys --help - ayuda agente IA"
+    ],
+    "support": {
+      "email": "contacto@kalighost.dev",
+      "telegram": "@elkalivpn",
+      "github_issues": "https://github.com/elkalivpn/KaliGhost/issues"
+    },
+    "license": "MIT - Para fines éticos y auditoría autorizada únicamente",
+    "disclaimer": "Esta herramienta es para pentesting autorizado. El usuario asume responsabilidad legal."
+  }
+}
