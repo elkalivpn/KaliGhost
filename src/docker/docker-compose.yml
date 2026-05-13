@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  kalighost:
+    build: .
+    container_name: kalighost
+    # Usa la imagen preconstruida si no quieres construir
+    # image: kalilinux/kali-rolling
+    
+    # Puertos expuestos
+    ports:
+      - "22:22"      # SSH (opcional, solo si necesitas acceso externo)
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+      - "8080:8080"  # Web UI
+      - "9001:9001"  # Metasploit
+    
+    # Volumen persistente para datos
+    volumes:
+      - kalighost-data:/home/kalighost/.kalighost
+      - ./onboarding:/home/kalighost/onboarding
+      - ./gui:/home/kalighost/gui
+    
+    # Variables de entorno
+    environment:
+      - DISPLAY=${DISPLAY}
+      - TZ=${TZ:-America/Mexico_City}
+      - KALIGHOST_MODE=autonomous
+      - YRYS_AGENT_MODEL=${YRYS_AGENT_MODEL:-claude-3-opus}
+      - FALLBACK_CHAIN=${FALLBACK_CHAIN:-aws-bedrock,ollama}
+    
+    # Capabilities para herramientas de red
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    
+    # Privilegiado para acceso completo (opcional)
+    # privileged: true
+    
+    # Reiniciar siempre
+    restart: unless-stopped
+    
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Opcional: Web UI separado
+  kalighost-ui:
+    image: nginx:alpine
+    container_name: kalighost-ui
+    ports:
+      - "8081:80"
+    volumes:
+      - ./gui:/usr/share/nginx/html:ro
+    depends_on:
+      - kalighost
+    restart: unless-stopped
+
+volumes:
+  kalighost-data:
+    driver: local
+    # Para usar cifrado, monta un volumen LUKS externo
+    # driver_opts:
+    #   type: ext4
+    #   device: /dev/mapper/encrypted-volume
+    #   o: bind
+
+networks:
+  default:
+    name: kalighost-network
+    driver: bridge
