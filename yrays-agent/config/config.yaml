@@ -187,34 +187,21 @@ aws:
 # ================= FALLBACK CHAIN (IA) =================
 # Orden de prioridad para modelos IA:
 # 1. Bedrock (token en entorno)
-# 2. Ollama local (modelo instalado)
-# 3. OpenAI (API key)
-# 4. Anthropic (API key)
-# 5. Local (respuestas predefinidas)
+# 2. Modelos remotos (API keys)
+# 3. Modelos locales (instalados)
+# 4. Respuestas predefinidas
 fallback_chain:
   - "bedrock"
-  - "ollama"
-  - "openai"
-  - "anthropic"
+  - "remote"
   - "local"
+  - "default"
 
-ollama:
+# Configuración de modelos de IA
+ai_models:
   enabled: true
-  host: "http://localhost:11434"
-  models:
-    default: "llama3:70b"
-    fallback: "mistral:7b"
+  default: "advanced"
+  fallback: "basic"
   auto_pull: true
-
-openai:
-  enabled: false
-  api_key_env: "OPENAI_API_KEY"
-  model: "gpt-4-turbo-preview"
-
-anthropic:
-  enabled: false
-  api_key_env: "ANTHROPIC_API_KEY"
-  model: "claude-3-opus-20240229"
 
 # ================= SELF-HEALING =================
 self_healing:
