@@ -91,6 +91,8 @@ if [[ "$OS_TYPE" == "linux" ]]; then
             "python3-opengl"
             "python3-dev"
             "build-essential"
+            "libgl1-mesa-dev"
+            "libglu1-mesa-dev"
         )
     elif [[ "$PACKAGE_MANAGER" == "yum" ]]; then
         SYSTEM_PACKAGES=(
@@ -99,8 +101,14 @@ if [[ "$OS_TYPE" == "linux" ]]; then
             "python3-devel"
             "gcc"
             "make"
+            "mesa-libGL-devel"
+            "mesa-libGLU-devel"
         )
     fi
+elif [[ "$OS_TYPE" == "macos" ]]; then
+    SYSTEM_PACKAGES=(
+        "python@3.9"
+    )
 fi
 
 # Instalar paquetes del sistema si es necesario

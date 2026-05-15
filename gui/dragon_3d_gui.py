@@ -18,13 +18,165 @@ from PySide6.QtGui import (
     QIcon, QPixmap, QFont, QPalette, QColor, QAction, QPainter,
     QPen, QBrush, QVector3D
 )
-from PySide6.QtCore import QTimer, Qt, Slot, Signal, QObject, QPropertyAnimation
+from PySide6.QtCore import QTimer, Qt, Slot, Signal, QObject
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtOpenGL import QOpenGLFunctions
-import OpenGL.GL as gl
-from OpenGL.GL import *
 
-class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
+# Try to import OpenGL functions - handle different versions
+try:
+    from PySide6.QtOpenGL import QOpenGLFunctions
+    OPENGL_FUNCTIONS_AVAILABLE = True
+except ImportError:
+    # In older versions, functions might be in QtGui or not available
+    try:
+        from PySide6.QtGui import QOpenGLFunctions
+        OPENGL_FUNCTIONS_AVAILABLE = True
+    except ImportError:
+        OPENGL_FUNCTIONS_AVAILABLE = False
+
+# Try to import OpenGL - handle case where it's not installed
+try:
+    import OpenGL.GL as gl
+    from OpenGL.GL import *
+    from OpenGL.GLU import *
+    OPENGL_AVAILABLE = True
+except ImportError:
+    OPENGL_AVAILABLE = False
+    print("Warning: OpenGL no disponible. La visualización 3D estará desactivada.")
+
+class Dragon2DWidget(QWidget):
+    """Widget de respaldo que muestra un dragón 2D cuando OpenGL no está disponible"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumSize(600, 400)
+        self.setWindowTitle("Dragón 2D de Kali Linux")
+        
+        # Parámetros de animación
+        self.rotation = 0
+        self.animation_speed = 1.0
+        
+        # Temporizador para animación
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.animate)
+        self.timer.start(50)  # Más lento para 2D
+    
+    def paintEvent(self, event):
+        """Dibujar el dragón 2D"""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Fondo oscuro
+        painter.fillRect(self.rect(), QColor(24, 24, 24))
+        
+        # Guardar estado del painter
+        painter.save()
+        
+        # Mover al centro
+        center = self.rect().center()
+        painter.translate(center)
+        
+        # Rotar según animación
+        painter.rotate(self.rotation)
+        
+        # Dibujar dragón 2D estilizado
+        self.draw_2d_dragon(painter)
+        
+        # Restaurar estado del painter
+        painter.restore()
+        
+        # Dibujar texto informativo
+        painter.setPen(QColor(34, 170, 85))  # Verde Kali
+        painter.setFont(QFont("Arial", 12, QFont.Bold))
+        if not OPENGL_AVAILABLE:
+            painter.drawText(self.rect(), Qt.AlignBottom | Qt.AlignHCenter, 
+                           "OpenGL no disponible - mostrando versión 2D\nInstale PyOpenGL para la experiencia 3D completa")
+    
+    def draw_2d_dragon(self, painter):
+        """Dibujar una representación 2D estilizada del dragón"""
+        # Configurar color verde característico de Kali
+        painter.setPen(QPen(QColor(34, 170, 85), 3))
+        painter.setBrush(QBrush(QColor(34, 170, 85, 100)))
+        
+        # Cuerpo principal (elipse)
+        body_rect = QRect(-100, -30, 200, 60)
+        painter.drawEllipse(body_rect)
+        
+        # Cabeza
+        painter.setBrush(QBrush(QColor(34, 170, 85, 150)))
+        head_rect = QRect(80, -25, 50, 50)
+        painter.drawEllipse(head_rect)
+        
+        # Ojos brillantes
+        painter.setPen(QPen(QColor(0, 255, 0), 2))
+        painter.setBrush(QBrush(QColor(0, 255, 0)))
+        painter.drawEllipse(95, -15, 8, 8)  # Ojo izquierdo
+        painter.drawEllipse(115, -15, 8, 8)  # Ojo derecho
+        
+        # Alas (animadas)
+        wing_offset = math.sin(self.rotation * 0.2) * 10
+        painter.setPen(QPen(QColor(0, 200, 100), 2))
+        painter.setBrush(QBrush(QColor(0, 200, 100, 80)))
+        
+        # Ala izquierda
+        left_wing = QPolygon([
+            QPoint(-50, -40),
+            QPoint(-100, -80 + wing_offset),
+            QPoint(-70, -60),
+            QPoint(-50, -40)
+        ])
+        painter.drawPolygon(left_wing)
+        
+        # Ala derecha
+        right_wing = QPolygon([
+            QPoint(-50, 40),
+            QPoint(-100, 80 - wing_offset),
+            QPoint(-70, 60),
+            QPoint(-50, 40)
+        ])
+        painter.drawPolygon(right_wing)
+        
+        # Cola
+        painter.setPen(QPen(QColor(34, 170, 85), 3))
+        tail_path = QPainterPath()
+        tail_path.moveTo(-100, 0)
+        tail_path.cubicTo(-130, -20, -150, 20, -170, 0)
+        painter.drawPath(tail_path)
+        
+        # Patas
+        painter.setPen(QPen(QColor(20, 120, 60), 4))
+        # Patas delanteras
+        painter.drawLine(50, 30, 60, 60)
+        painter.drawLine(50, -30, 60, -60)
+        # Patas traseras
+        painter.drawLine(-50, 30, -40, 60)
+        painter.drawLine(-50, -30, -40, -60)
+    
+    def animate(self):
+        """Animar el dragón 2D"""
+        self.rotation += 2 * self.animation_speed
+        self.update()
+
+# Create dummy classes for when OpenGL is not available
+if not OPENGL_AVAILABLE:
+    class QOpenGLWidget(QWidget):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setWindowTitle("Dragón 2D de Kali Linux - OpenGL no disponible")
+            
+        def initializeGL(self):
+            pass
+            
+        def resizeGL(self, width, height):
+            pass
+            
+        def paintGL(self):
+            # Replace with 2D widget when OpenGL is not available
+            pass
+
+class Dragon3DRenderer(QOpenGLWidget):
+    """Widget para renderizar el dragón 3D de Kali Linux"""
+
+class Dragon3DRenderer(QOpenGLWidget):
     """Widget para renderizar el dragón 3D de Kali Linux"""
     
     def __init__(self, parent=None):
@@ -52,6 +204,12 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
         # Parámetros del dragón
         self.dragon_parts = []
         self.initialize_dragon()
+        
+        # Check if OpenGL is available, if not, create 2D version
+        if not OPENGL_AVAILABLE:
+            self.timer.stop()
+            # Replace with 2D widget functionality
+            self.rotation = 0
     
     def initialize_dragon(self):
         """Inicializar las partes del dragón"""
@@ -70,7 +228,16 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def initializeGL(self):
         """Inicializar OpenGL"""
-        self.initializeOpenGLFunctions()
+        if not OPENGL_AVAILABLE:
+            return
+            
+        # Only try to initialize OpenGL functions if they're available
+        if OPENGL_FUNCTIONS_AVAILABLE:
+            try:
+                self.initializeOpenGLFunctions()
+            except:
+                pass
+                
         glClearColor(*self.kali_dark, 1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
@@ -80,6 +247,9 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def resizeGL(self, width, height):
         """Redimensionar la vista OpenGL"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         glViewport(0, 0, width, height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -89,6 +259,37 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def paintGL(self):
         """Renderizar la escena"""
+        if not OPENGL_AVAILABLE:
+            # Use QPainter for 2D rendering when OpenGL is not available
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Fondo oscuro
+            painter.fillRect(self.rect(), QColor(24, 24, 24))
+            
+            # Guardar estado del painter
+            painter.save()
+            
+            # Mover al centro
+            center = self.rect().center()
+            painter.translate(center)
+            
+            # Rotar según animación
+            painter.rotate(self.rotation)
+            
+            # Dibujar dragón 2D estilizado
+            self.draw_2d_dragon_simple(painter)
+            
+            # Restaurar estado del painter
+            painter.restore()
+            
+            # Dibujar texto informativo
+            painter.setPen(QColor(34, 170, 85))  # Verde Kali
+            painter.setFont(QFont("Arial", 12, QFont.Bold))
+            painter.drawText(self.rect(), Qt.AlignBottom | Qt.AlignHCenter, 
+                           "OpenGL no disponible - mostrando versión 2D\nInstale PyOpenGL para la experiencia 3D completa")
+            return
+            
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         
@@ -111,8 +312,71 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
         # Añadir efecto de brillo especial
         self.render_special_effects()
     
+    def draw_2d_dragon_simple(self, painter):
+        """Dibujar una representación 2D simplificada del dragón para el widget OpenGL"""
+        # Configurar color verde característico de Kali
+        painter.setPen(QPen(QColor(34, 170, 85), 3))
+        painter.setBrush(QBrush(QColor(34, 170, 85, 100)))
+        
+        # Cuerpo principal (elipse)
+        body_rect = QRect(-100, -30, 200, 60)
+        painter.drawEllipse(body_rect)
+        
+        # Cabeza
+        painter.setBrush(QBrush(QColor(34, 170, 85, 150)))
+        head_rect = QRect(80, -25, 50, 50)
+        painter.drawEllipse(head_rect)
+        
+        # Ojos brillantes
+        painter.setPen(QPen(QColor(0, 255, 0), 2))
+        painter.setBrush(QBrush(QColor(0, 255, 0)))
+        painter.drawEllipse(95, -15, 8, 8)  # Ojo izquierdo
+        painter.drawEllipse(115, -15, 8, 8)  # Ojo derecho
+        
+        # Alas (animadas)
+        wing_offset = math.sin(self.rotation * 0.2) * 10
+        painter.setPen(QPen(QColor(0, 200, 100), 2))
+        painter.setBrush(QBrush(QColor(0, 200, 100, 80)))
+        
+        # Ala izquierda
+        left_wing = QPolygon([
+            QPoint(-50, -40),
+            QPoint(-100, -80 + wing_offset),
+            QPoint(-70, -60),
+            QPoint(-50, -40)
+        ])
+        painter.drawPolygon(left_wing)
+        
+        # Ala derecha
+        right_wing = QPolygon([
+            QPoint(-50, 40),
+            QPoint(-100, 80 - wing_offset),
+            QPoint(-70, 60),
+            QPoint(-50, 40)
+        ])
+        painter.drawPolygon(right_wing)
+        
+        # Cola
+        painter.setPen(QPen(QColor(34, 170, 85), 3))
+        tail_path = QPainterPath()
+        tail_path.moveTo(-100, 0)
+        tail_path.cubicTo(-130, -20, -150, 20, -170, 0)
+        painter.drawPath(tail_path)
+        
+        # Patas
+        painter.setPen(QPen(QColor(20, 120, 60), 4))
+        # Patas delanteras
+        painter.drawLine(50, 30, 60, 60)
+        painter.drawLine(50, -30, 60, -60)
+        # Patas traseras
+        painter.drawLine(-50, 30, -40, 60)
+        painter.drawLine(-50, -30, -40, -60)
+    
     def render_dragon_part(self, part):
         """Renderizar una parte del dragón"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         glPushMatrix()
         
         # Posición de la parte
@@ -147,6 +411,9 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def draw_cube(self, width, height, depth):
         """Dibujar un cubo como parte del dragón"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         w, h, d = width/2, height/2, depth/2
         
         glBegin(GL_QUADS)
@@ -189,6 +456,9 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def render_special_effects(self):
         """Renderizar efectos especiales del dragón"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         # Efecto de energía en los ojos
         glPushMatrix()
         glTranslatef(1.8, 0.4, 0.2)  # Ojo izquierdo
@@ -207,12 +477,18 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def draw_sphere(self, radius):
         """Dibujar una esfera simple"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         quad = gluNewQuadric()
         gluSphere(quad, radius, 10, 10)
         gluDeleteQuadric(quad)
     
     def render_energy_particles(self):
         """Renderizar partículas de energía"""
+        if not OPENGL_AVAILABLE:
+            return
+            
         for i in range(20):
             angle = (self.rotation_y + i * 18) % 360
             radius = 2.5 + math.sin(self.rotation_y * 0.05 + i) * 0.5
@@ -231,6 +507,12 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     @Slot()
     def animate(self):
         """Animar el dragón"""
+        if not OPENGL_AVAILABLE:
+            # Animate 2D version
+            self.rotation += 2 * self.animation_speed
+            self.update()
+            return
+            
         self.rotation_y += 1 * self.animation_speed
         self.rotation_x = math.sin(self.rotation_y * 0.02) * 10
         self.rotation_z = math.cos(self.rotation_y * 0.03) * 5
@@ -242,7 +524,9 @@ class Dragon3DRenderer(QOpenGLWidget, QOpenGLFunctions):
     
     def set_scale(self, scale):
         """Configurar escala del dragón"""
-        self.scale = scale / 50.0 + 0.5
+        if OPENGL_AVAILABLE:
+            self.scale = scale / 50.0 + 0.5
+        # For 2D, we could adjust the size of the drawing, but for simplicity we'll just ignore
 
 class KaliGhostMainWindow(QMainWindow):
     """Ventana principal de KaliGhost con dragón 3D"""
