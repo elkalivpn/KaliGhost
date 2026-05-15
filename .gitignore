@@ -89,4 +89,5 @@ Cargo.lock
 
 # Caches
 .cache/
-.conda/
+.conda/models/*.gguf
+.gitignored_models/
