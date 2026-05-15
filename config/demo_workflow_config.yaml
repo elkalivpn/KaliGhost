@@ -1,0 +1,70 @@
+# Configuración de Demo de Workflow de Pentesting - KaliGhost
+
+# Configuración General
+demo_version: "1.0.0"
+default_target: "scanme.nmap.org"
+max_scan_rate: 1000  # paquetes por segundo máximo
+timeout_duration: 300  # segundos timeout por tarea
+
+# Herramientas Activadas
+tools:
+  nmap: true
+  masscan: true
+  rustscan: true
+  dirsearch: true
+  gobuster: true
+  wfuzz: true
+  ffuf: true
+  sqlmap: true
+  nikto: true
+  metasploit: false  # Desactivado por seguridad en demo
+  john: false        # Desactivado por seguridad en demo
+  hashcat: false     # Desactivado por seguridad en demo
+  hydra: false       # Desactivado por seguridad en demo
+  tshark: true
+  tcpdump: true
+
+# Configuración de Escaneo
+scan_profiles:
+  quick:
+    nmap_args: "-F -T4"
+    port_range: "1-1000"
+    intensity: "low"
+  
+  normal:
+    nmap_args: "-sV -sC -O"
+    port_range: "1-65535"
+    intensity: "medium"
+  
+  thorough:
+    nmap_args: "-sS -sV -sC -O -A --script default,safe,vuln"
+    port_range: "1-65535"
+    intensity: "high"
+
+# Wordlists por defecto
+wordlists:
+  web_directories: "/usr/share/dirb/wordlists/common.txt"
+  usernames: "/usr/share/seclists/Usernames/top-usernames-shortlist.txt"
+  passwords: "/usr/share/seclists/Passwords/Common-Credentials/rockyou-15.txt"
+
+# Salida y Reportes
+output:
+  format: "txt"  # txt, json, xml
+  save_location: "/tmp/kalighost_demo_results/"
+  compress_results: true
+
+# Seguridad
+security:
+  authorized_targets_only: true
+  exclude_ranges: 
+    - "127.0.0.0/8"
+    - "10.0.0.0/8"
+    - "172.16.0.0/12"
+    - "192.168.0.0/16"
+  warning_threshold: 100  # advertir si se escanean más de 100 hosts
+
+# Integración con YrYs-Agent
+yrays_integration:
+  auto_submit_results: false
+  create_skills_from_findings: false
+  send_notifications: true
