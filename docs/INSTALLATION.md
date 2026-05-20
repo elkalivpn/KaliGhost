@@ -137,9 +137,12 @@ aws:
   region: "us-east-1"
 
 monetization:
-  gumroad_starter: "https://gumroad.com/l/tu-producto-starter"
+  gumroad_community: "https://gumroad.com/l/kalighost-community"
+  gumroad_essential: "https://gumroad.com/l/kalighost-essential"
   gumroad_pro: "https://gumroad.com/l/tu-producto-pro"
+  gumroad_advanced: "https://gumroad.com/l/kalighost-advanced"
   gumroad_enterprise: "https://gumroad.com/l/tu-producto-enterprise"
+  gumroad_cloud_pro: "https://gumroad.com/l/kalighost-pro-cloud"
 ```
 
 ### 2. Probar agente autónomo

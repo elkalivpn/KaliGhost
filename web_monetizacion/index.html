@@ -23,16 +23,25 @@
             from { transform: translateY(0); }
             to { transform: translateY(-5px); }
         }
+        /* New badge styling */
+        .new-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-white font-sans antialiased">
-
     <!-- Navbar -->
     <nav class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
         <div class="text-2xl font-bold tracking-tighter">👻 KaliGhost</div>
         <div class="space-x-4">
             <a href="#features" class="hover:text-green-400 transition">Características</a>
             <a href="#pricing" class="hover:text-green-400 transition">Precios</a>
+            <a href="#marketplace" class="hover:text-green-400 transition">Marketplace</a>
             <a href="https://github.com/elkalivpn/KaliGhost" target="_blank" class="bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700 transition">GitHub</a>
         </div>
     </nav>
@@ -92,7 +101,6 @@
         <div class="max-w-6xl mx-auto">
             <h2 class="text-3xl font-bold text-center mb-16">Elige tu Nivel de Operación</h2>
             <div class="grid md:grid-cols-3 gap-8">
-
                 <!-- Pack Starter -->
                 <div class="card-hover p-8 bg-slate-800 rounded-2xl border border-slate-700 flex flex-col h-full">
                     <h3 class="text-2xl font-bold mb-2">Starter</h3>
@@ -114,13 +122,14 @@
                     <div class="absolute top-0 right-0 bg-green-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">MÁS VENDIDO</div>
                     <h3 class="text-2xl font-bold mb-2">Pro</h3>
                     <p class="text-slate-400 mb-6">Para freelancers y auditores</p>
-                    <div class="text-4xl font-bold mb-6">$99 <span class="text-sm font-normal text-slate-400">/licencia</span></div>
+                    <div class="text-4xl font-bold mb-6">$99 <span class="text-sm font-normal text-slate-400">/año</span></div>
                     <ul class="space-y-3 mb-8 text-slate-300 flex-grow">
                         <li>✅ Todo lo del Starter</li>
                         <li>✅ <strong>Script Ghost AI (v2.0)</strong></li>
                         <li>✅ Integración con API de IA (GPT-4)</li>
                         <li>✅ 5 Scripts de exploits personalizados</li>
                         <li>✅ Soporte por email (48h)</li>
+                        <li><span class="new-badge inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-900 text-blue-300">NUEVO</span> Acceso al Marketplace básico</li>
                     </ul>
                     <a href="https://gumroad.com/l/tu-producto-pro" target="_blank" class="block text-center bg-green-500 hover:bg-green-600 text-slate-900 py-3 rounded-lg font-bold transition CTA-button">
                         Comprar Pro
@@ -138,17 +147,178 @@
                         <li>✅ 50+ Scripts de automatización</li>
                         <li>✅ 12 meses de soporte prioritario</li>
                         <li>✅ Formación en ciberseguridad (8h)</li>
+                        <li><span class="new-badge inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-900 text-purple-300">NUEVO</span> Acceso completo al Marketplace</li>
                     </ul>
                     <a href="https://gumroad.com/l/tu-producto-enterprise" target="_blank" class="block text-center bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold transition CTA-button">
                         Contactar / Comprar
                     </a>
                 </div>
-
+            </div>
+            
+            <!-- New Subscription Section -->
+            <div class="mt-16 p-8 bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl border border-slate-600">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2">KaliGhost Pro Cloud</h3>
+                        <p class="text-slate-300">Potencia en la nube con nuestras herramientas avanzadas</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <span class="text-3xl font-bold">$29</span>
+                        <span class="text-slate-400">/mes</span>
+                        <a href="https://gumroad.com/l/kalighost-pro-cloud" target="_blank" class="ml-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg font-bold transition inline-block">
+                            Prueba Gratis 14 días
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="flex items-center">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span class="text-slate-300 text-sm">Despliegue en cloud</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span class="text-slate-300 text-sm">100GB almacenamiento seguro</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span class="text-slate-300 text-sm">Actualizaciones semanales</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span class="text-slate-300 text-sm">Cola de procesos prioritaria</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section (optional extra) -->
+    <!-- Marketplace Section -->
+    <section id="marketplace" class="py-20 bg-slate-800 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-4">Marketplace de Extensiones</h2>
+            <p class="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+                Amplía las capacidades de KaliGhost con herramientas creadas por la comunidad y expertos en seguridad
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-6 bg-slate-900 rounded-xl border border-slate-700">
+                    <div class="text-3xl mb-4">🛠️</div>
+                    <h3 class="text-xl font-bold mb-2">Exploit Packs</h3>
+                    <p class="text-slate-400 mb-4">
+                        Conjuntos especializados de exploits para diferentes tipos de vulnerabilidades
+                    </p>
+                    <div class="text-sm text-slate-500">Desde $19</div>
+                </div>
+                
+                <div class="p-6 bg-slate-900 rounded-xl border border-slate-700">
+                    <div class="text-3xl mb-4">📚</div>
+                    <h3 class="text-xl font-bold mb-2">Wordlists & Dictionaries</h3>
+                    <p class="text-slate-400 mb-4">
+                        Listas optimizadas para fuerza bruta y reconocimiento específico
+                    </p>
+                    <div class="text-sm text-slate-500">Desde $9</div>
+                </div>
+                
+                <div class="p-6 bg-slate-900 rounded-xl border border-slate-700">
+                    <div class="text-3xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold mb-2">Reporting Templates</h3>
+                    <p class="text-slate-400 mb-4">
+                        Plantillas profesionales para reportes de pentesting y auditorías
+                    </p>
+                    <div class="text-sm text-slate-500">Desde $29</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="#" class="inline-block bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-slate-900 font-bold py-3 px-8 rounded-full transition text-lg">
+                    Explorar Marketplace
+                </a>
+                <p class="text-slate-500 mt-4 text-sm">
+                    Los desarrolladores obtienen el 70% de las ventas. ¡Únete hoy!
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Training Section -->
+    <section class="py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-4">Programas de Entrenamiento</h2>
+            <p class="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+                Potencia tus habilidades con nuestros programas de formación certificados
+            </p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="p-8 bg-slate-800 rounded-2xl border border-slate-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Fundamentos de KaliGhost</h3>
+                            <p class="text-slate-400 mb-4">
+                                Curso intensivo de 2 días para dominar lo básico
+                            </p>
+                        </div>
+                        <span class="text-2xl font-bold text-green-500">$299</span>
+                    </div>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Instalación y configuración</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Uso del agente YrYs</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Automatización básica</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Certificado de finalización</span>
+                        </li>
+                    </ul>
+                    <a href="#" class="block text-center bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold transition">
+                        Más información
+                    </a>
+                </div>
+                
+                <div class="p-8 bg-slate-800 rounded-2xl border border-slate-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Especialista Certificado</h3>
+                            <p class="text-slate-400 mb-4">
+                                Programa de certificación de 5 días para profesionales
+                            </p>
+                        </div>
+                        <span class="text-2xl font-bold text-green-500">$499</span>
+                    </div>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Todas las áreas del programa Fundamentos</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Herramientas avanzadas de IA</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Desarrollo de extensiones</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span class="text-slate-300">Examen de certificación</span>
+                        </li>
+                    </ul>
+                    <a href="#" class="block text-center bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold transition">
+                        Más información
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
     <section class="py-20 bg-gradient-to-b from-slate-800 to-slate-900 text-center">
         <div class="max-w-4xl mx-auto px-4">
             <h2 class="text-3xl font-bold mb-6">¿Listo para comenzar?</h2>

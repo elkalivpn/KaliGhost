@@ -1,0 +1,20 @@
+{
+  "name": "Pasivo",
+  "mode": "passive",
+  "description": "Modo de monitoreo continuo",
+  "settings": {
+    "scan_intensity": "low",
+    "execution_speed": "slow",
+    "resource_usage": "low",
+    "alert_sensitivity": "high",
+    "auto_report": true,
+    "persistent_monitoring": true,
+    "network_activity": "low",
+    "tool_timeout": 900,
+    "max_parallel_scans": 1,
+    "retry_attempts": 10,
+    "log_level": "INFO"
+  },
+  "created_at": null,
+  "is_active": false
+}

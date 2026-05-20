@@ -1,0 +1,164 @@
+[
+  {
+    "timestamp": "2026-05-20T10:52:42.695788",
+    "metrics": {
+      "cpu": 15.1,
+      "memory": 71.2,
+      "disk": 5.126609308084755,
+      "load_average": 2.34912109375,
+      "processes": 546
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:04:50.399211",
+    "metrics": {
+      "cpu": 20.4,
+      "memory": 74.1,
+      "disk": 5.126609308084755,
+      "load_average": 2.75732421875,
+      "processes": 550
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:05:14.217153",
+    "metrics": {
+      "cpu": 18.5,
+      "memory": 73.3,
+      "disk": 5.126609308084755,
+      "load_average": 3.279296875,
+      "processes": 552,
+      "net_bytes_sent": 360028160,
+      "net_bytes_recv": 2313030656,
+      "timestamp": "2026-05-20T11:05:14.215891"
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:11:44.186798",
+    "metrics": {
+      "cpu": 29.7,
+      "memory": 73.7,
+      "disk": 5.126609308084755,
+      "load_average": 4.595703125,
+      "processes": 548
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:12:07.176906",
+    "metrics": {
+      "cpu": 23.3,
+      "memory": 73.6,
+      "disk": 5.126609308084755,
+      "load_average": 4.0654296875,
+      "processes": 549,
+      "net_bytes_sent": 378644480,
+      "net_bytes_recv": 2369638400,
+      "timestamp": "2026-05-20T11:12:07.173125"
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:20:52.501167",
+    "metrics": {
+      "cpu": 17.7,
+      "memory": 73.2,
+      "disk": 5.126609308084755,
+      "load_average": 2.04296875,
+      "processes": 557
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:31:16.642852",
+    "metrics": {
+      "cpu": 22.1,
+      "memory": 73.9,
+      "disk": 5.126609308084755,
+      "load_average": 2.6982421875,
+      "processes": 557
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:40:57.195964",
+    "metrics": {
+      "cpu": 12.2,
+      "memory": 74.4,
+      "disk": 5.126609308084755,
+      "load_average": 1.70458984375,
+      "processes": 562
+    }
+  },
+  {
+    "timestamp": "2026-05-20T11:50:54.647493",
+    "metrics": {
+      "cpu": 12.4,
+      "memory": 72.8,
+      "disk": 5.126609308084755,
+      "load_average": 1.69091796875,
+      "processes": 562
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:01:43.588751",
+    "metrics": {
+      "cpu": 17.1,
+      "memory": 73.5,
+      "disk": 5.126609308084755,
+      "load_average": 2.55859375,
+      "processes": 564,
+      "net_bytes_sent": 474373120,
+      "net_bytes_recv": 2569179136,
+      "timestamp": "2026-05-20T12:01:43.583856"
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:01:47.279933",
+    "metrics": {
+      "cpu": 18.6,
+      "memory": 73.7,
+      "disk": 5.126609308084755,
+      "load_average": 2.75390625,
+      "processes": 564
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:11:13.669958",
+    "metrics": {
+      "cpu": 19.1,
+      "memory": 74.5,
+      "disk": 5.126609308084755,
+      "load_average": 1.7939453125,
+      "processes": 566
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:11:31.937908",
+    "metrics": {
+      "cpu": 26.4,
+      "memory": 75.6,
+      "disk": 5.126609308084755,
+      "load_average": 1.6171875,
+      "processes": 570,
+      "net_bytes_sent": 485662720,
+      "net_bytes_recv": 2575698944,
+      "timestamp": "2026-05-20T12:11:31.935066"
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:22:14.838671",
+    "metrics": {
+      "cpu": 13.7,
+      "memory": 78.0,
+      "disk": 5.126609308084755,
+      "load_average": 2.60693359375,
+      "processes": 536
+    }
+  },
+  {
+    "timestamp": "2026-05-20T12:32:34.353979",
+    "metrics": {
+      "cpu": 21.9,
+      "memory": 59.1,
+      "disk": 5.126609308084755,
+      "load_average": 6.15771484375,
+      "processes": 594
+    }
+  }
+]

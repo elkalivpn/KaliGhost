@@ -1,0 +1,16 @@
+{
+  "name": "equilibrado",
+  "mode": "balanced",
+  "description": "Modo de comportamiento equilibrado",
+  "settings": {
+    "scan_intensity": "normal",
+    "execution_speed": "normal",
+    "resource_usage": "moderate",
+    "alert_sensitivity": "medium",
+    "network_activity": "normal",
+    "tool_timeout": 300,
+    "max_parallel_scans": 3,
+    "retry_attempts": 3,
+    "log_level": "INFO"
+  }
+}

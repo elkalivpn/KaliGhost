@@ -17,6 +17,7 @@ agent:
   adaptive_strategy: true          # Cambia approach si falla
   language: "es"                   # Idioma NLP primario
   log_level: "INFO"               # DEBUG | INFO | WARNING | ERROR
+  mission: "Asistir en tareas de pentesting y seguridad informática de manera autónoma y eficiente"
   
   # Hot reload
   config_hot_reload: true
@@ -314,7 +315,7 @@ monetization:
     starter_link: "https://gumroad.com/l/tu-producto-starter"
     pro_link: "https://gumroad.com/l/tu-producto-pro"
     enterprise_link: "https://gumroad.com/l/tu-producto-enterprise"
-  web_path: "/Users/mrhardcore/KaliGhost/web_monetizacion"
+  web_path: "./web_monetizacion"
   auto_redirect: true
 
 # ================= REPORTING =================

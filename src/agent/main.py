@@ -17,8 +17,8 @@ from PySide6.QtCore import Qt, Signal, Slot, QObject, QTimer
 from PySide6.QtGui import QFont, QColor, QPalette, QIcon, QAction, QMovie
 
 # --- Rutas ---
-# Forzamos la ruta base del proyecto
-KALIGHOST_DIR = Path("/Users/mrhardcore/KaliGhost")
+# Usar rutas relativas en lugar de rutas fijas
+KALIGHOST_DIR = Path(__file__).parent.parent.parent
 YRAYS_AGENT_DIR = KALIGHOST_DIR / "yrays-agent"
 GUI_DIR = KALIGHOST_DIR / "src" / "gui"
 
@@ -179,11 +179,12 @@ class AgentInterface(QWidget):
         self.append_message(f"\n\033[1m[Usuario]\033[0m {command}\n")
         self.input_field.clear()
         
-        # Depuración de rutas
-        self.append_message(f"🔧 Usando ruta fija: {KALIGHOST_DIR}\n")
-        
-        # Ruta al agente real
+        # Usar ruta relativa en lugar de ruta fija
+        KALIGHOST_DIR = Path(__file__).parent.parent.parent
+        YRAYS_AGENT_DIR = KALIGHOST_DIR / "yrays-agent"
         YRAYS_PATH = YRAYS_AGENT_DIR / "yrays.py"
+        
+        self.append_message(f"🔧 Ruta del proyecto: {KALIGHOST_DIR}\n")
         self.append_message(f"🔍 Ruta de yrays.py: {YRAYS_PATH}\n")
         
         if not YRAYS_PATH.exists():
@@ -192,17 +193,21 @@ class AgentInterface(QWidget):
         
         # Ejecutar yrays.py con el comando
         try:
+            # Usar el directorio del proyecto como cwd
             result = subprocess.run(
                 ["python3", str(YRAYS_PATH), command],
                 capture_output=True,
                 text=True,
-                cwd=str(KALIGHOST_DIR)
+                cwd=str(KALIGHOST_DIR),
+                timeout=30  # Añadir timeout para evitar bloqueos
             )
             
             if result.returncode == 0:
                 self.append_message("✅ " + result.stdout)
             else:
                 self.append_message("❌ " + result.stderr)
+        except subprocess.TimeoutExpired:
+            self.append_message("⏰ Error: El comando ha excedido el tiempo límite\n")
         except Exception as e:
             self.append_message(f"Error al ejecutar el agente: {e}\n")
     

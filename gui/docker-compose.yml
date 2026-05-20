@@ -1,0 +1,123 @@
+version: '3.8'
+
+# ==============================================================================
+# KaliGhost Pro - Docker Compose (Development)
+# ==============================================================================
+# Build context: project root (.)
+# Usage: docker-compose up
+# Frontend: http://localhost:5173
+# Backend: http://localhost:8000
+# ==============================================================================
+
+services:
+  # --- PostgreSQL Database ---
+  db:
+    image: postgres:15-alpine
+    container_name: kali-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-kaliuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-kalighost_dev_pass}
+      POSTGRES_DB: ${DB_NAME:-kalidb}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-kaliuser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kali-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- Redis Cache/Queue ---
+  redis:
+    image: redis:7-alpine
+    container_name: kali-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kali-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- FastAPI Backend ---
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+    container_name: kali-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-kaliuser}:${DB_PASSWORD:-kalighost_dev_pass}@db:5432/${DB_NAME:-kalidb}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./websocket_backend.py:/app/websocket_backend.py:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kali-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- React Frontend ---
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: development
+    container_name: kali-frontend
+    restart: unless-stopped
+    environment:
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8000}
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.js:/app/vite.config.js:ro
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - kali-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  kali-net:
+    driver: bridge
+    name: kali-network
+
+volumes:
+  pgdata:
+    name: kali-pgdata

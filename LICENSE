@@ -1,65 +1,145 @@
-MIT License
+# KaliGhost Pro Professional License Agreement
 
-Copyright (c) 2024-2026 elkalivpn / KaliGhost Contributors
+## Version 2.0 | Effective Date: May 15, 2026
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright © 2026 KaliGhost Team. All rights reserved.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This license agreement governs the use, modification, and distribution of KaliGhost Pro Professional ("the Software"), a sophisticated cybersecurity interface designed for professional penetration testing and security assessment operations.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## LICENSE GRANT
+
+KaliGhost Pro is offered under a tiered licensing model to accommodate various use cases while ensuring sustainable development and professional support.
+
+### 1. PERSONAL AND EDUCATIONAL USE LICENSE
+For non-commercial personal use, educational institutions, and individual learning purposes:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+**Conditions:**
+- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+- Use must be strictly non-commercial in nature.
+- Modifications must be clearly documented and attributed.
+- Redistribution must maintain identical licensing terms.
+
+**Limitations:**
+- No warranty express or implied regarding fitness for any particular purpose.
+- No liability for damages arising from use or inability to use.
+- No trademark rights granted without explicit written permission.
+
+### 2. COMMERCIAL USE LICENSE
+For organizations and individuals engaging in commercial penetration testing, security consulting, or incorporating the Software into commercial products:
+
+**Standard Commercial License ($299/year):**
+This license permits commercial use of the Software within a single organization for all employees and contractors.
+
+**Features Included:**
+- Full commercial use rights
+- Priority technical support (24-hour response SLA)
+- Access to professional documentation and training materials
+- Regular security updates and feature releases
+- Compliance reporting tools
+- Integration assistance for enterprise environments
+
+**Enterprise Commercial License (Custom Pricing):**
+Designed for large organizations with specialized requirements.
+
+**Additional Features:**
+- Unlimited organizational use across all subsidiaries
+- Dedicated account management and professional services
+- Custom development and integration support
+- 4-hour critical issue response SLA
+- On-site training and certification programs
+- Advanced compliance and audit support
+
+### 3. OPEN SOURCE COMPONENTS LICENSE
+Certain components of KaliGhost Pro are made available under the GNU General Public License version 3:
+
+**Components Include:**
+- Core automation scripting framework
+- Community-developed tool integrations
+- Sample configuration files and templates
+- Documentation and educational resources
+
+These components retain their original GPLv3 licensing terms while being integrated into the broader KaliGhost Pro ecosystem.
+
+## RESTRICTIONS
+
+### Prohibited Activities:
+1. **Unauthorized Commercial Distribution:** Distributing the Software commercially without proper licensing.
+2. **Reverse Engineering for Competitive Advantage:** Using reverse engineering to replicate core functionality in competing products.
+3. **Malicious Use:** Employing the Software for unauthorized penetration testing or malicious hacking activities.
+4. **Trademark Infringement:** Using KaliGhost trademarks, logos, or branding without explicit permission.
+5. **Export Violation:** Exporting or using the Software in jurisdictions prohibited by applicable export control laws.
+
+### Attribution Requirements:
+Any redistribution or derivative work must include attribution to "KaliGhost Professional Interface" and maintain links to the official project repository.
+
+## WARRANTY DISCLAIMER
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+This disclaimer applies equally to all license tiers and distribution methods.
+
+## SUPPORT AND MAINTENANCE
+
+### Personal/Educational License Holders:
+- Community forum support
+- Documentation and knowledge base access
+- Best-effort email support (72-hour response time)
+- Community-driven feature development
+
+### Commercial License Holders:
+- Priority email support with guaranteed response times
+- Access to professional services for implementation assistance
+- Dedicated release notes and migration guides
+- Exclusive early access to upcoming features
+
+### Enterprise License Holders:
+- 24/7/365 premium support with phone and chat options
+- Assigned technical account manager
+- Proactive system health monitoring
+- Strategic partnership engagement opportunities
+
+## THIRD-PARTY COMPONENTS
+
+KaliGhost Pro incorporates several third-party components under their respective licenses:
+
+- **PySide6/Qt** - GNU Lesser General Public License (LGPL) v3
+- **NumPy** - BSD 3-Clause License
+- **PyOpenGL** - 3-Clause BSD License
+- **Various Kali Linux tools** - Individual open-source licenses
+- **Professional icon sets** - Mixed commercial and open-source licenses
+
+Full details of third-party licenses are available in the LICENSE_THIRD_PARTY.md file included with the distribution.
+
+## EXPORT COMPLIANCE
+
+You understand that the Software is subject to export restrictions by the United States government and import restrictions by other governments. You agree to comply with all applicable export and import laws and regulations.
+
+## TERMINATION
+
+This Agreement will terminate automatically if Licensee fails to comply with any of the terms and conditions herein. Upon termination, Licensee must destroy all copies of the Software in its possession or control.
+
+## GOVERNING LAW
+
+This Agreement shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions.
+
+## ENTIRE AGREEMENT
+
+This Agreement constitutes the entire agreement between the parties concerning its subject matter and supersedes all prior or contemporaneous agreements, representations, and understandings.
+
+## MODIFICATIONS
+
+We reserve the right, at our sole discretion, to modify or replace these terms at any time. What constitutes a material change will be determined at our sole discretion.
+
+By using or accessing the Software, you agree to be bound by the terms outlined in this license agreement.
 
 ---
 
-## 📋 Aviso Legal Adicional
+For licensing inquiries, commercial support, or enterprise partnership opportunities, please contact:
 
-Este software está diseñado exclusivamente para:
+**KaliGhost Professional Team**
+Email: licensing@kalighost.pro
+Website: https://www.kalighost.pro
 
-✅ **Pentesting autorizado** – Con permiso explícito del dueño del sistema
-✅ **Investigación de seguridad** – En entornos controlados de laboratorio
-✅ **Educación** – Aprendizaje ético en ciberseguridad
-✅ **Auditorías profesionales** – Contratadas legalmente
-
-❌ **PROHIBIDO:**
-- Ataques no autorizados a sistemas
-- Daño malicioso o destrucción de datos
-- Violación de leyes locales/internacionales
-- Uso en malware, ransomware, ataques APT
-
-**El usuario asume TOTAL responsabilidad legal** por el uso de KaliGhost.
-Los desarrolladores no se hacen responsables de mal uso.
-
----
-
-## 🌐 Cumplimiento
-
-KaliGhost cumple con:
-
-- **OWASP Code of Ethics**
-- **(ISC)² Code of Ethics**
-- **Leyes de Estados Unidos** (export controls)
-- **Regulaciones de la UE** (GDPR para datos recolectados en pentests)
-
----
-
-## 📧 Contacto Legal
-
-Para cuestiones legales o licenciamiento comercial:
-
-📧 **Legal:** legal@kalighost.dev
-📍 **Jurisdicción:** Delaware, USA (company registration pending)
-
----
-
-*Al usar KaliGhost, aceptas estos términos.*
+This license document is provided in good faith and is intended to clarify the terms under which KaliGhost Pro Professional may be used. Legal advice should be sought for specific situations.

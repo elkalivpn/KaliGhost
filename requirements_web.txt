@@ -1,0 +1,12 @@
+# KaliGhost FastAPI Integration Requirements
+
+## New Dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+httpx==0.25.2
+pydantic==2.5.0
+python-dotenv==1.0.0
+
+## Optional (for enhanced features)
+psutil>=5.9.0  # System monitoring
+aiofiles>=23.1.0  # Async file operations

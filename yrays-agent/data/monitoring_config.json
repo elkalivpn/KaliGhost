@@ -1,0 +1,31 @@
+{
+  "monitoring": {
+    "interval": 60,
+    "alert_thresholds": {
+      "cpu": 80,
+      "memory": 85,
+      "disk": 90
+    },
+    "predictive_analysis": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "prediction_accuracy": 0.85
+    },
+    "alerting": {
+      "notifications": {
+        "email": false,
+        "slack": false,
+        "desktop": true,
+        "voice": false
+      },
+      "severity_levels": {
+        "warning": 1,
+        "critical": 2
+      }
+    },
+    "data_storage": {
+      "history_retention_days": 30,
+      "logs_rotation": "daily"
+    }
+  }
+}

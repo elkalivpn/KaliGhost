@@ -1,0 +1,22 @@
+{
+  "name": "continuo",
+  "mode": "continuous",
+  "description": "Modo de monitoreo continuo con alertas proactivas",
+  "settings": {
+    "scan_intensity": "low",
+    "execution_speed": "normal",
+    "resource_usage": "low",
+    "alert_sensitivity": "high",
+    "network_activity": "normal",
+    "tool_timeout": 300,
+    "max_parallel_scans": 2,
+    "retry_attempts": 3,
+    "log_level": "INFO",
+    "continuous_monitoring": true,
+    "alert_thresholds": {
+      "cpu": 80,
+      "memory": 85,
+      "disk": 90
+    }
+  }
+}

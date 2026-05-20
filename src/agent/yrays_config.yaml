@@ -325,10 +325,17 @@ monetization:
   gumroad:
     enabled: true
     starter_link: "https://gumroad.com/l/tu-producto-starter"
+    essential_link: "https://gumroad.com/l/kalighost-essential"
     pro_link: "https://gumroad.com/l/tu-producto-pro"
+    advanced_link: "https://gumroad.com/l/kalighost-advanced"
     enterprise_link: "https://gumroad.com/l/tu-producto-enterprise"
-  web_path: "/Users/mrhardcore/KaliGhost/web_monetizacion"
+    cloud_pro_link: "https://gumroad.com/l/kalighost-pro-cloud"
+  web_path: "./web_monetizacion"
   auto_redirect: true
+  marketplace:
+    enabled: true
+    url: "https://kalighost.dev/marketplace"
+    api_endpoint: "https://api.kalighost.dev/marketplace"
 
 # ================= REPORTING =================
 reporting:

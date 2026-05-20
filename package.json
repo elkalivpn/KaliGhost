@@ -1,0 +1,11 @@
+{
+  "name": "test_psutil.py",
+  "version": "1.0.0",
+  "description": "Script de prueba para verificar psutil",
+  "main": "test_psutil.py",
+  "scripts": {
+    "test": "python3 test_psutil.py"
+  },
+  "author": "Hermes Agent",
+  "license": "MIT"
+}
