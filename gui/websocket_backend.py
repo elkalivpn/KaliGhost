@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import time
+import os
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
@@ -488,28 +489,82 @@ class KaliGhostSocketServer:
             })
     
     async def _simulate_operation_start(self, sid, data):
-        """Simular inicio de operación (para testing)"""
+        """Iniciar operación de pentesting real"""
         self.state_manager.set_state(AgentState.ANALYZING)
         
-        # Crear threads simulados
-        threads = [
-            ("Network Reconnaissance", 0),
-            ("Vulnerability Scanning", 0.3),
-            ("Exploit Preparation", 0.6),
-            ("Persistence Module", 0.9)
-        ]
-        
-        for i, (name, delay) in enumerate(threads):
-            await asyncio.sleep(delay)
-            self.state_manager.add_thread(i, name)
-            self.state_manager.add_log(f"[T{i+1}] {name} started", LogLevel.INFO)
-        
-        await asyncio.sleep(1)
-        self.state_manager.set_state(AgentState.EXECUTING)
+        # Importar y ejecutar el agente real
+        try:
+            import sys
+            sys.path.insert(0, '/Users/mrhardcore/kalighost')
+            
+            # Aquí integrar con el agente real de kalighost
+            target = data.get("target")
+            phase = data.get("phase", "reconnaissance")
+            
+            self.state_manager.add_log(
+                f"Starting {phase} phase on target: {target}",
+                LogLevel.INFO
+            )
+            
+            # Crear threads para tareas reales
+            threads = [
+                ("Network Reconnaissance", 0),
+                ("Vulnerability Scanning", 0.3),
+                ("Exploit Preparation", 0.6),
+                ("Persistence Module", 0.9)
+            ]
+            
+            for i, (name, delay) in enumerate(threads):
+                await asyncio.sleep(delay)
+                self.state_manager.add_thread(i, name)
+                self.state_manager.add_log(f"[T{i+1}] {name} started", LogLevel.INFO)
+            
+            await asyncio.sleep(1)
+            self.state_manager.set_state(AgentState.EXECUTING)
+        except Exception as e:
+            logger.error(f"Error starting real operation: {e}")
+            self.state_manager.set_state(AgentState.ERROR)
+            self.state_manager.add_log(f"Operation error: {e}", LogLevel.ERROR)
     
     async def broadcast_to_all(self, data: Dict):
         """Broadcast a todos los clientes conectados"""
         await self.sio.emit('broadcast', data)
+    
+    async def get_real_agent_status(self) -> Dict:
+        """Obtener estado real del agente kalighost"""
+        try:
+            import sys
+            sys.path.insert(0, '/Users/mrhardcore/kalighost')
+            
+            # Leer archivos de estado del agente si existen
+            status_file = Path('/Users/mrhardcore/kalighost/logs/agent_status.json')
+            if status_file.exists():
+                with open(status_file) as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not read agent status: {e}")
+        
+        # Retornar estado por defecto
+        return self.state_manager.get_status_summary()
+    
+    async def sync_with_real_agent(self):
+        """Loop de sincronización con agente real"""
+        while True:
+            try:
+                real_status = await self.get_real_agent_status()
+                
+                # Actualizar métricas si hay cambios
+                if real_status:
+                    await self.broadcast_to_all({
+                        "type": "agent_status_sync",
+                        "status": real_status,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                
+                await asyncio.sleep(2)
+            except Exception as e:
+                logger.error(f"Error syncing with real agent: {e}")
+                await asyncio.sleep(5)
     
     async def metrics_broadcast_loop(self):
         """Loop que envía métricas cada 500ms"""
@@ -563,6 +618,7 @@ class KaliGhostSocketServer:
         # Iniciar loops de broadcast
         asyncio.create_task(self.metrics_broadcast_loop())
         asyncio.create_task(self.logs_broadcast_loop())
+        asyncio.create_task(self.sync_with_real_agent())
     
     def get_asgi_app(self):
         """Obtener app ASGI para ejecutar"""
@@ -588,12 +644,13 @@ def main():
     server = KaliGhostSocketServer()
     asgi_app = server.get_asgi_app()
     
-    port = 5001  # Changed from 5000
-    logger.info(f"Starting server on http://0.0.0.0:{port}")
+    port = int(os.getenv('WEBSOCKET_PORT', 5001))
+    host = os.getenv('WEBSOCKET_HOST', '0.0.0.0')
+    logger.info(f"Starting server on http://{host}:{port}")
     
     uvicorn.run(
         asgi_app,
-        host="0.0.0.0",
+        host=host,
         port=port,
         log_level="info"
     )

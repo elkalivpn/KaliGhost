@@ -1,0 +1,55 @@
+ESTRUCTURA FINAL DE KALIGHOST
+=============================
+
+✅ RAÍZ PRINCIPAL (Dashboard Next.js)
+  - src/                    → Código React/Next.js principal
+  - public/                 → Assets estáticos
+  - package.json            → Dependencias Node.js (incluye socket.io-client)
+  - tsconfig.json           → TypeScript config
+  - next.config.ts          → Next.js config
+  - tailwind.config.ts      → Tailwind config
+  - Dockerfile              → Build Next.js
+
+✅ BACKEND
+  - gui/websocket_backend.py  → FastAPI + Socket.IO
+  - Dockerfile.backend        → Build Python
+  - requirements.txt          → Deps Python (FastAPI, Socket.IO, etc)
+
+✅ AGENTE
+  - core/                     → Lógica del agente
+  - orchestrator/             → Orquestación
+
+✅ DOCKER
+  - docker-compose.yml        → Frontend en 3000, Backend en 5001
+
+✅ DOCUMENTACIÓN
+  - DASHBOARD_SETUP.md        → Guía de setup
+  - setup-integration.sh      → Script automático
+
+ESTRUCTURA DE SERVICIOS
+=======================
+
+docker-compose.yml:
+  - frontend (Next.js) en puerto 3000 → PRINCIPAL
+  - backend (Python) en puerto 5001  → API WebSocket
+
+INICIO
+======
+cd /Users/mrhardcore/kalighost
+docker-compose up -d
+
+Acceso:
+- http://localhost:3000        → Dashboard (Raíz)
+- http://localhost:5001/health → Backend Health
+
+VERIFICACIÓN RÁPIDA
+===================
+✓ src/ existe con código React
+✓ public/ existe con assets
+✓ package.json con socket.io-client
+✓ Dockerfile de Next.js
+✓ gui/websocket_backend.py funcional
+✓ docker-compose.yml configurado
+✓ requirements.txt con FastAPI + Socket.IO
+
+¡Listo para ejecutar!

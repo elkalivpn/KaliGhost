@@ -1,43 +1,22 @@
-# Informe de Monitoreo Proactivo del Sistema KaliGhost
+# System Monitoring Report
 
-## Estado General del Sistema
+## Current Metrics
+- **CPU Usage**: 0%
+- **Memory Usage**: 97.64% (Critical)
+- **Disk Usage**: 51%
 
-**Fecha:** 2026-05-20 11:05:14
-**Estado del Sistema:** Normal
+## Critical Alert
+High memory usage detected - 97.64% exceeds critical threshold of 90%.
 
-## Métricas Actuales
+## Top Memory Consuming Processes
+1. Virtualization.VirtualMachine - 11.9% (PID: 81332)
+2. fileproviderd - 6.4% (PID: 1278)
+3. Brave Browser Helper (Renderer) - 2.5% (PID: 31596)
+4. Docker Desktop Helper (Renderer) - 1.4% (PID: 81615)
+5. Brave Browser Helper (Renderer) - 1.1% (PID: 4449)
 
-- **Uso de CPU:** 18.5%
-- **Uso de Memoria:** 73.3%
-- **Uso de Disco:** 5.12%
-- **Promedio de Carga del Sistema:** 3.28
-- **Número de Procesos:** 552
-
-## Umbral de Alerta Configurado
-
-- **CPU:** 80%
-- **Memoria:** 85%
-- **Disco:** 90%
-
-## Análisis de Tendencias
-
-Los registros históricos indican:
-- Uso de CPU promedio en la última hora: 18.5%
-- Uso de memoria promedio en la última hora: 73.3%
-
-## Alertas
-
-Ninguna alerta crítica detectada.
-
-## Recomendaciones
-
-- El sistema se encuentra en buen estado actualmente.
-- Los niveles de uso son bajos, en línea con el modo de monitoreo continuo activo ("continuo").
-- Se recomienda mantener el estado actual para operaciones normales.
-
-## Configuración Actual
-
-- Perfil de comportamiento activo: continuo
-- Intervalo de monitoreo: 60 segundos
-- Sistema operativo: macOS
-- Herramientas de monitoreo instaladas: psutil
+## Recommendations
+1. Investigate Virtualization.VirtualMachine process consuming 11.9% of memory
+2. Consider restarting memory-intensive applications like Brave Browser
+3. Monitor memory usage for continued high consumption
+4. Manual intervention required for memory cleanup (sudo purge not available in automated environment)

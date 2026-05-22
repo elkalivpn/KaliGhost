@@ -1,0 +1,24 @@
+Proactive Monitoring System - Dashboard Update Report
+
+Timestamp: Fri May 22 04:50:57 CEST 2026
+CPU Usage: 0%
+Memory Usage: 97.54% (CRITICAL - High memory usage detected)
+Disk Usage: 53%
+
+Memory Usage Analysis:
+The system has detected a critical level of memory usage at 97.54%. This exceeds the threshold of 90% and requires immediate attention.
+
+Top memory-consuming processes:
+1. /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualization.VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine (11.9%)
+2. /System/Library/PrivateFrameworks/FileProvider.framework/Support/fileproviderd (5.0%)
+3. /Applications/Brave Browser.app/Contents/MacOS/Brave Browser (1.3%)
+4. /Applications/Docker.app/Contents/MacOS/Docker Desktop.app/Contents/Frameworks/Docker Desktop Helper (Renderer).app/Contents/MacOS/Docker Desktop Helper (Renderer) (1.2%)
+5. /Applications/Docker.app/Contents/MacOS/com.docker.backend services (1.0%)
+
+Actions recommended:
+1. Review high memory processes for unnecessary consumption
+2. Consider restarting processes that may be consuming excessive resources
+3. Monitor memory usage trends for continued high consumption
+4. If this persists, consider system optimization or resource allocation review
+
+Dashboard data file has been updated successfully at: ~/KaliGhost/gui/frontend/dashboard_data.json

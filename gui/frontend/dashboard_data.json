@@ -1,15 +1,1 @@
-{
-  "timestamp": "2026-05-20T12:35:28.560879",
-  "metrics": {
-    "cpu": 16.8,
-    "memory": 65.2,
-    "disk": 5.126609308084755,
-    "load_average": 2.5439453125,
-    "processes": 583,
-    "net_bytes_sent": 566233088,
-    "net_bytes_recv": 2693529600,
-    "timestamp": "2026-05-20T12:35:28.560833"
-  },
-  "system_status": "normal",
-  "alerts": []
-}
+{"timestamp": 1779486063.35224, "cpu": {"percent": 0}, "memory": {"percent": 97.92}, "disk": {"percent": 52}}

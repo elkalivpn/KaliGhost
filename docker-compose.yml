@@ -1,0 +1,75 @@
+version: '3.9'
+
+services:
+  # Frontend Next.js - Principal
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kalighost-main
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5001
+      - NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:5001/socket.io
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - kalighost-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend WebSocket - Python FastAPI
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: kalighost-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - WEBSOCKET_HOST=0.0.0.0
+      - WEBSOCKET_PORT=5001
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./gui:/app/gui
+      - ./core:/app/core
+      - ./orchestrator:/app/orchestrator
+    networks:
+      - kalighost-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  kalighost-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

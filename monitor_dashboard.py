@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Monitor de dashboard simplificado para KaliGhost
-Este script se ejecuta cada 10 minutos para actualizar los datos del dashboard
+Script para actualizar los datos del dashboard de KaliGhost cada 10 minutos.
+Este script recopila métricas del sistema, procesos, logs y otros datos relevantes
+para mantener el dashboard actualizado con información en tiempo real.
 """
 
 import psutil
+import time
 import json
 import logging
 import os
-from datetime import datetime
 import sys
+from datetime import datetime
+from typing import Dict, Any
 
 # Configurar logging
 logging.basicConfig(
@@ -23,7 +26,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def get_system_metrics():
+def get_system_metrics() -> Dict[str, Any]:
     """Obtener métricas actuales del sistema"""
     metrics = {}
     
@@ -50,131 +53,112 @@ def get_system_metrics():
         # Número de procesos
         metrics['processes'] = len(psutil.pids())
         
-        # Uso de red
-        try:
-            net_io = psutil.net_io_counters()
-            metrics['net_bytes_sent'] = net_io.bytes_sent
-            metrics['net_bytes_recv'] = net_io.bytes_recv
-        except:
-            metrics['net_bytes_sent'] = 0
-            metrics['net_bytes_recv'] = 0
+        # Procesos de KaliGhost
+        kali_processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'username']):
+            try:
+                if 'kalighost' in proc.info['name'].lower():
+                    kali_processes.append({
+                        'pid': proc.info['pid'],
+                        'name': proc.info['name'],
+                        'username': proc.info['username']
+                    })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        metrics['kalighost_processes'] = kali_processes
         
-        # Fecha y hora
-        metrics['timestamp'] = datetime.now().isoformat()
+        # Tiempo de actividad del sistema
+        metrics['uptime'] = time.time() - psutil.boot_time()
         
         return metrics
         
     except Exception as e:
         logger.error(f"Error obteniendo métricas del sistema: {e}")
-        return None
+        return {}
 
-def generate_dashboard_data():
-    """Generar datos en formato para dashboard"""
+def get_agent_status() -> Dict[str, Any]:
+    """Obtener estado de los agentes autonomos"""
+    status = {}
+    
     try:
-        # Obtener métricas
-        metrics = get_system_metrics()
-        if not metrics:
-            return None
-            
-        # Datos base para el dashboard
-        dashboard_data = {
-            "timestamp": datetime.now().isoformat(),
-            "metrics": metrics,
-            "system_status": "normal",
-            "alerts": []
-        }
-        
-        # Definir umbrales de alerta (basados en el perfil continuo)
-        thresholds = {
-            "cpu": 80,
-            "memory": 85,
-            "disk": 90
-        }
-        
-        # Verificar alertas por umbrales
-        for metric, value in metrics.items():
-            if metric in thresholds and value > thresholds[metric]:
-                severity = "high" if value > thresholds[metric] * 1.1 else "medium"
-                dashboard_data["alerts"].append({
-                    "type": "threshold_exceeded",
-                    "metric": metric,
-                    "value": value,
-                    "threshold": thresholds[metric],
-                    "severity": severity,
-                    "message": f"{metric.upper()} excedió el umbral ({thresholds[metric]}%)"
-                })
+        # Verificar procesos de agentes
+        agent_processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else ''
+                if any(agent_type in cmdline.lower() for agent_type in ['proactive', 'orchestrator', 'yrays', 'kalighost']):
+                    agent_processes.append({
+                        'pid': proc.info['pid'],
+                        'name': proc.info['name'],
+                        'cmdline': cmdline[:100] + '...' if len(cmdline) > 100 else cmdline
+                    })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
                 
-                # Actualizar estado del sistema
-                if severity == "high":
-                    dashboard_data["system_status"] = "critical"
-                elif dashboard_data["system_status"] != "critical":
-                    dashboard_data["system_status"] = "warning"
+        status['running_agents'] = agent_processes
+        status['agent_count'] = len(agent_processes)
         
-        return dashboard_data
+        # Verificar archivos de log importantes
+        log_dir = '/Users/mrhardcore/KaliGhost/yrays-agent/logs'
+        log_files = {}
+        if os.path.exists(log_dir):
+            for filename in os.listdir(log_dir):
+                if filename.endswith('.log'):
+                    filepath = os.path.join(log_dir, filename)
+                    try:
+                        stat = os.stat(filepath)
+                        log_files[filename] = {
+                            'size': stat.st_size,
+                            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                        }
+                    except Exception as e:
+                        logger.debug(f"Error al leer log file {filename}: {e}")
+                        
+        status['log_files'] = log_files
+        
+        return status
         
     except Exception as e:
-        logger.error(f"Error generando datos para dashboard: {e}")
-        return None
+        logger.error(f"Error obteniendo estado de agentes: {e}")
+        return {}
 
-def export_to_dashboard_file(data):
-    """Exportar datos al archivo del dashboard"""
+def main():
+    """Función principal para actualizar datos del dashboard"""
     try:
-        # Directorio de destino
-        dest_dir = '/Users/mrhardcore/KaliGhost/gui/frontend'
-        os.makedirs(dest_dir, exist_ok=True)
+        logger.info("Actualizando datos del dashboard de KaliGhost")
         
-        # Archivo de datos del dashboard
-        dashboard_file = os.path.join(dest_dir, 'dashboard_data.json')
+        # Obtener métricas del sistema
+        system_metrics = get_system_metrics()
+        agent_status = get_agent_status()
         
-        # Escribir en formato JSON
+        # Combinar todos los datos
+        dashboard_data = {
+            'timestamp': datetime.now().isoformat(),
+            'system_metrics': system_metrics,
+            'agent_status': agent_status
+        }
+        
+        # Guardar datos en archivo JSON para que pueda ser leído por el dashboard
+        dashboard_file = '/Users/mrhardcore/KaliGhost/yrays-agent/data/dashboard_data.json'
+        os.makedirs(os.path.dirname(dashboard_file), exist_ok=True)
+        
         with open(dashboard_file, 'w') as f:
-            json.dump(data, f, indent=2)
-            
-        logger.info(f"Datos exportados a {dashboard_file}")
+            json.dump(dashboard_data, f, indent=2)
+        
+        logger.info(f"Datos del dashboard actualizados correctamente en {dashboard_file}")
+        
+        # También escribir resumen a log
+        logger.info(f"CPU: {system_metrics.get('cpu', 0):.1f}%, "
+                   f"Memoria: {system_metrics.get('memory', 0):.1f}%, "
+                   f"Agentes ejecutándose: {agent_status.get('agent_count', 0)}")
+        
         return True
         
     except Exception as e:
-        logger.error(f"Error exportando datos para dashboard: {e}")
+        logger.error(f"Error actualizando dashboard: {e}")
+        logger.debug(f"Detalles del error: {e}")
         return False
 
-def main():
-    """Función principal para actualización del dashboard"""
-    try:
-        logger.info("Actualizando datos para dashboard...")
-        
-        # Generar datos para dashboard
-        dashboard_data = generate_dashboard_data()
-        
-        if dashboard_data:
-            # Exportar los datos
-            success = export_to_dashboard_file(dashboard_data)
-            
-            if success:
-                logger.info("Dashboard actualizado exitosamente")
-                
-                # Mostrar información clave
-                cpu = dashboard_data['metrics'].get('cpu', 0)
-                memory = dashboard_data['metrics'].get('memory', 0)
-                disk = dashboard_data['metrics'].get('disk', 0)
-                
-                status_msg = f"Sistema: {dashboard_data['system_status']}"
-                metrics_msg = f"CPU: {cpu:.1f}%, Mem: {memory:.1f}%, Disco: {disk:.1f}%"
-                
-                logger.info(f"{status_msg} - {metrics_msg}")
-                
-                if dashboard_data['alerts']:
-                    logger.warning(f"Alertas detectadas: {len(dashboard_data['alerts'])}")
-                    for alert in dashboard_data['alerts']:
-                        logger.warning(f"ALERTA: {alert['message']}")
-            else:
-                logger.error("Error al exportar datos al dashboard")
-        else:
-            logger.error("No se pudieron generar datos para el dashboard")
-            
-    except Exception as e:
-        logger.error(f"Error en actualización del dashboard: {e}")
-        import traceback
-        logger.error(f"Detalles: {traceback.format_exc()}")
-
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)

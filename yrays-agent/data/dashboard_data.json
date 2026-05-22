@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-20T20:05:08.018127",
+  "system_metrics": {
+    "cpu": 22.4,
+    "memory": 73.4,
+    "disk": 5.126609308084755,
+    "load_average": 3.00244140625,
+    "processes": 463,
+    "kalighost_processes": [],
+    "uptime": 54275.99916911125
+  },
+  "agent_status": {
+    "running_agents": [
+      {
+        "pid": 50456,
+        "name": "SAExtensionOrchestrator",
+        "cmdline": "/System/Library/PrivateFrameworks/SiriAnalytics.framework/Versions/A/XPCServices/SAExtensionOrchestr..."
+      },
+      {
+        "pid": 51800,
+        "name": "bash",
+        "cmdline": "/bin/bash -c source /var/folders/r0/3d4wz2b95r7gk9l2nygfgmpw0000gn/T/hermes-snap-8ad80c11df3a.sh >/d..."
+      }
+    ],
+    "agent_count": 2,
+    "log_files": {
+      "advanced_monitoring.log": {
+        "size": 2262,
+        "modified": "2026-05-20T12:11:31.938663"
+      },
+      "yrays.log": {
+        "size": 19076,
+        "modified": "2026-05-20T09:57:14.181815"
+      },
+      "cron_monitor.log": {
+        "size": 3560,
+        "modified": "2026-05-20T20:00:00.442485"
+      },
+      "dashboard_monitor.log": {
+        "size": 834,
+        "modified": "2026-05-20T16:42:43.896378"
+      },
+      "monitoring.log": {
+        "size": 8483,
+        "modified": "2026-05-20T16:29:16.502224"
+      },
+      "orchestrator.log": {
+        "size": 1852,
+        "modified": "2026-05-19T23:15:41.981359"
+      },
+      "proactive_monitor.log": {
+        "size": 165482,
+        "modified": "2026-05-19T23:15:41.981181"
+      },
+      "dashboard_update.log": {
+        "size": 377,
+        "modified": "2026-05-20T20:05:06.868536"
+      }
+    }
+  }
+}

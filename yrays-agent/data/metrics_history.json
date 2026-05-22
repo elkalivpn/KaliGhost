@@ -160,5 +160,11 @@
       "load_average": 6.15771484375,
       "processes": 594
     }
+  },
+  {
+    "timestamp": "2026-05-20T12:48:05Z",
+    "cpu_percent": 35.0,
+    "memory_percent": 60.0,
+    "disk_percent": 50.0
   }
 ]
