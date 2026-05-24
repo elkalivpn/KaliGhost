@@ -1,0 +1,21 @@
+{
+  "product_name": "Ciberseguridad Cero a Experto",
+  "bundle_id": "KG-20260523_003440",
+  "created_at": "2026-05-23T00:34:40.305501",
+  "pricing": {
+    "standard_price": 297,
+    "discounted_price": 197,
+    "discount_percentage": 33
+  },
+  "content_components": {
+    "course_outline": "/Users/mrhardcore/KaliGhost/products/ciberseguridad_cero_a_experto_course_outline.json",
+    "ebook_summary": "/Users/mrhardcore/KaliGhost/products/ciberseguridad_cero_a_experto_ebook_summary.json"
+  },
+  "features": [
+    "25 horas de contenido profesional",
+    "E-book de 500 p\u00e1ginas",
+    "Acceso a comunidad VIP",
+    "Soporte personalizado",
+    "Certificado de finalizaci\u00f3n"
+  ]
+}

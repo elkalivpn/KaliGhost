@@ -1,0 +1,43 @@
+{
+  "title": "Ciberseguridad Cero a Experto - Gu\u00eda Completa",
+  "pages": 500,
+  "sections": [
+    {
+      "section": "Introducci\u00f3n a Hackeo \u00c9tico",
+      "content": "Fundamentos y conceptos b\u00e1sicos",
+      "pages": 20
+    },
+    {
+      "section": "Herramientas de Seguridad",
+      "content": "Descripci\u00f3n y uso de herramientas profesionales",
+      "pages": 50
+    },
+    {
+      "section": "Metodolog\u00edas de Pentesting",
+      "content": "Frameworks y procesos de an\u00e1lisis",
+      "pages": 60
+    },
+    {
+      "section": "Casos Reales",
+      "content": "An\u00e1lisis de incidentes y estudios de caso",
+      "pages": 100
+    },
+    {
+      "section": "Estrategias Avanzadas",
+      "content": "T\u00e9cnicas expertas y buenas pr\u00e1cticas",
+      "pages": 150
+    },
+    {
+      "section": "Certificaciones",
+      "content": "Preparaci\u00f3n para certificaciones profesionales",
+      "pages": 120
+    }
+  ],
+  "exercises": 50,
+  "downloadables": [
+    "Plantillas de informes",
+    "Checklists de seguridad",
+    "Gu\u00edas de instalaci\u00f3n",
+    "Base de datos de vulnerabilidades"
+  ]
+}
