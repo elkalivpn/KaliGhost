@@ -1,0 +1,473 @@
+custom_agents:
+  ml_specialist:
+    enabled: true
+    model: gpt-4
+    specializations:
+    - nlp
+    - computer_vision
+    system_prompt: You are ML specialist. Provide state-of-the-art solutions.
+    temperature: 0.6
+    tools:
+    - tensorflow
+    - pytorch
+    - scikit-learn
+custom_workflows:
+  ai_powered_app:
+    description: Build complete AI application with ML ops
+    name: AI-Powered Application
+    steps:
+    - agent: orchestrator
+      id: analyze
+      task: Analyze AI application requirements
+      timeout: 300
+    - agent: ml_specialist
+      depends_on:
+      - analyze
+      id: ml_design
+      task: Design ML architecture
+      timeout: 600
+    - agent: security_agent
+      depends_on:
+      - ml_design
+      id: security
+      task: Secure AI model and APIs
+      timeout: 600
+system_config:
+  agents:
+    compliance_agent:
+      enabled: true
+      ethics_review: true
+      model: gpt-4
+      standards:
+      - GDPR
+      - HIPAA
+      - SOC2
+      - CCPA
+      system_prompt: 'You are the Compliance & Ethics Agent. Your role is to ensure
+        applications
+
+        meet legal and ethical standards.
+
+
+        Guidelines:
+
+        - Generate compliance documentation
+
+        - Check ethical implications
+
+        - Verify regulatory compliance
+
+        - Flag potential issues
+
+        '
+      temperature: 0.3
+    defaults:
+      max_retries: 3
+      max_tokens: 4096
+      temperature: 0.7
+      timeout_seconds: 300
+      top_p: 0.9
+    infrastructure_agent:
+      auto_scaling_enabled: true
+      cloud_providers:
+        aws:
+          default_region: us-east-1
+          enabled: true
+        digitalocean:
+          default_region: nyc1
+          enabled: true
+      enabled: true
+      model: gpt-3.5-turbo
+      system_prompt: 'You are the Infrastructure Agent. Your role is to provision
+        and manage
+
+        cloud infrastructure and auto-scaling.
+
+
+        Guidelines:
+
+        - Provision cloud resources
+
+        - Configure auto-scaling
+
+        - Manage secrets
+
+        - Optimize costs
+
+        '
+      temperature: 0.5
+    monetization_agent:
+      enabled: true
+      licensing_enabled: true
+      model: gpt-3.5-turbo
+      stripe_enabled: true
+      system_prompt: 'You are the Monetization Agent. Your role is to design and implement
+
+        monetization strategies and licensing systems.
+
+
+        Guidelines:
+
+        - Design flexible pricing models
+
+        - Generate license keys
+
+        - Track usage metrics
+
+        - Recommend upsell opportunities
+
+        '
+      temperature: 0.6
+    orchestrator:
+      enabled: true
+      max_retries: 5
+      max_sub_tasks: 20
+      model: gpt-4
+      system_prompt: You are KaliGhost orchestrator. Be aggressive in decomposition.
+      temperature: 0.3
+      timeout_seconds: 600
+    security_agent:
+      auto_remediate: true
+      enabled: true
+      model: gpt-4
+      severity_threshold: medium
+      system_prompt: 'You are the Security Hardening Agent. Your role is to identify
+        and remediate
+
+        security vulnerabilities in code.
+
+
+        Guidelines:
+
+        - Perform thorough security analysis
+
+        - Identify OWASP Top 10 vulnerabilities
+
+        - Suggest secure implementations
+
+        - Generate remediation code
+
+        '
+      temperature: 0.3
+      tools:
+      - semgrep
+      - bandit
+      - trivy
+    threat_agent:
+      dark_web_monitoring: true
+      enabled: true
+      model: gpt-4
+      osint_sources:
+      - shodan
+      - censys
+      - exploit-db
+      system_prompt: 'You are the Threat Intelligence Agent. Your role is to assess
+        security threats
+
+        and vulnerabilities.
+
+
+        Guidelines:
+
+        - Collect OSINT data
+
+        - Assess threat levels
+
+        - Monitor dark web mentions
+
+        - Generate threat reports
+
+        '
+      temperature: 0.4
+      update_frequency_hours: 6
+  core:
+    app_name: KaliGhost 3.0
+    debug: true
+    description: Elite Developer Agentic Environment
+    logging:
+      backup_count: 10
+      file: logs/kalighost.log
+      format: json
+      level: INFO
+      max_size_mb: 100
+    mode: development
+    version: 3.0.0
+  deployment:
+    autoscaling:
+      enabled: true
+      max_replicas: 10
+      min_replicas: 1
+      target_cpu_percent: 70
+    cicd:
+      enabled: true
+      platform: github_actions
+    docker:
+      enabled: true
+      image_name: kalighost
+      image_tag: latest
+      registry: docker.io
+    environment: production
+    kubernetes:
+      enabled: true
+      namespace: kalighost
+      replicas: 3
+  development:
+    api_docs:
+      enabled: true
+      redoc: true
+      swagger_ui: true
+    debug_mode: false
+    hot_reload: false
+    testing:
+      enabled: false
+      mock_responses: false
+      test_data_dir: ./test_data
+    verbose_logging: false
+  features:
+    advanced:
+      autonomous_decision_making: true
+      multi_agent_collaboration: true
+      predictive_scaling: true
+      self_healing: true
+    agents:
+      compliance_checking: true
+      gui_generation: true
+      im_integration: true
+      infrastructure_automation: true
+      monetization: true
+      orchestrator_enabled: true
+      security_hardening: true
+      threat_intelligence: true
+    experimental:
+      autonomous_coding: false
+      ml_threat_detection: false
+      web3_integration: false
+  identity:
+    brand_color: '#00ff00'
+    brand_emoji: "\U0001F409"
+    brand_name: KaliGhost
+    error_messages:
+      default: An error occurred. Please try again.
+      security_violation: Security constraint violated. Action blocked.
+      timeout: Operation timed out. Increasing timeout...
+    success_messages:
+      deployment_ready: "\U0001F680 Ready for deployment"
+      task_complete: "\u2705 Task completed successfully"
+    system_prompt_template: 'You are {agent_name}, part of the KaliGhost 3.0 system.
+
+      Your expertise: {expertise}
+
+      Your role: {role}
+
+
+      Always be:
+
+      - Professional and precise
+
+      - Security-conscious
+
+      - Compliance-aware
+
+      - User-focused
+
+
+      Current context: {context}
+
+      '
+    welcome_message: "\U0001F409 Welcome to KaliGhost 3.0\nElite Developer Agentic\
+      \ Environment\n\nI'm here to help you build, secure, and scale applications.\n"
+  integrations:
+    aws:
+      access_key: ${AWS_ACCESS_KEY}
+      enabled: true
+      region: us-east-1
+      secret_key: ${AWS_SECRET_KEY}
+    channels:
+      feishu:
+        enabled: false
+        token: ${FEISHU_TOKEN}
+      slack:
+        enabled: true
+        token: ${SLACK_BOT_TOKEN}
+      telegram:
+        enabled: true
+        token: ${TELEGRAM_BOT_TOKEN}
+      wechat:
+        enabled: false
+        token: ${WECHAT_TOKEN}
+    github:
+      enabled: true
+      org: your-org
+      token: ${GITHUB_TOKEN}
+    sentry:
+      dsn: ${SENTRY_DSN}
+      enabled: true
+    stripe:
+      api_key: ${STRIPE_API_KEY}
+      api_version: '2024-01-01'
+      enabled: true
+      webhook_secret: ${STRIPE_WEBHOOK_SECRET}
+  memory:
+    auto_cleanup: true
+    cache:
+      enabled: true
+      max_memory_mb: 512
+      provider: redis
+      ttl_seconds: 3600
+      url: redis://localhost:6379
+    compress_old_entries: true
+    database:
+      connection_string: sqlite:///./kalighost_memory.db
+      type: sqlite
+    postgresql:
+      database: kalighost
+      host: localhost
+      password: ${DB_PASSWORD}
+      port: 5432
+      user: ${DB_USER}
+    retention_days: 30
+  models:
+    embeddings:
+      dimension: 1536
+      model: text-embedding-3-small
+      provider: openai
+    fallback:
+    - model_name: gpt-3.5-turbo
+      provider: openai
+    - model_name: claude-opus
+      provider: anthropic
+    local_models:
+      enabled: false
+      model_dir: ./models
+      models:
+      - name: mistral-7b
+        type: llamacpp
+      - name: neural-chat
+        type: transformers
+    primary:
+      api_key: ${OPENAI_API_KEY}
+      api_version: '2024-05-01'
+      base_url: https://api.openai.com/v1
+      max_retries: 3
+      model_name: gpt-4
+      provider: openai
+      timeout_seconds: 60
+  performance:
+    async:
+      enabled: true
+      worker_threads: 20
+    batching:
+      batch_size: 50
+      batch_timeout_seconds: 5
+      enabled: true
+    cache:
+      enabled: true
+      max_size_mb: 1024
+      ttl_seconds: 7200
+    connection_pool:
+      max_size: 20
+      min_size: 5
+    monitoring:
+      enabled: true
+      metrics_port: 9090
+      trace_enabled: true
+  security:
+    api:
+      cors_origins:
+      - '*'
+      enable_cors: true
+      rate_limit: 100
+      require_https: true
+    auth:
+      jwt_algorithm: RS256
+      jwt_secret: ${JWT_SECRET}
+      method: jwt
+      token_expiry_hours: 1
+    encryption:
+      algorithm: AES-256-GCM
+      key: ${ENCRYPTION_KEY}
+    sandbox:
+      cpu_limit: 2
+      enabled: true
+      memory_limit_mb: 2048
+      network_access: false
+      timeout_seconds: 300
+      type: docker
+    secrets:
+      provider: vault
+      vault_addr: http://localhost:8200
+      vault_token: ${VAULT_TOKEN}
+  ui:
+    cli:
+      colors: true
+      table_format: pretty
+      verbose: true
+    dragon:
+      animation_speed: 1.0
+      enabled: true
+      interactive: true
+    webchat:
+      enabled: true
+      language: en
+      port: 8001
+      theme: dark
+  workflows:
+    custom:
+      full_stack_development:
+        description: Build complete applications
+        name: Full Stack Development
+        steps:
+        - agent: orchestrator
+          id: analyze
+          prompt: Analyze requirements
+        - agent: orchestrator
+          id: plan
+          prompt: Create development plan
+        - agent: infrastructure_agent
+          id: implement
+          prompt: Set up infrastructure
+        - agent: security_agent
+          id: secure
+          prompt: Harden security
+        - agent: monetization_agent
+          id: monetize
+          prompt: Add monetization
+        - agent: infrastructure_agent
+          id: deploy
+          prompt: Deploy to production
+      microservices_deployment:
+        description: Deploy microservices architecture
+        name: Microservices Deployment
+        steps:
+        - agent: orchestrator
+          id: design
+          prompt: Design microservices
+        - agent: infrastructure_agent
+          id: containerize
+          prompt: Create Docker containers
+        - agent: infrastructure_agent
+          id: orchestrate
+          prompt: Setup Kubernetes
+      security_audit:
+        description: Complete security assessment
+        name: Security Audit
+        steps:
+        - agent: security_agent
+          id: scan
+          prompt: Scan for vulnerabilities
+        - agent: threat_agent
+          id: threat_assess
+          prompt: Assess threats
+        - agent: compliance_agent
+          id: compliance_check
+          prompt: Check compliance
+        - agent: orchestrator
+          id: report
+          prompt: Generate report
+    default_workflow: full_stack_development
+    execution:
+      max_concurrent: 5
+      parallel_tasks: true
+      retry_failed_tasks: true
+      save_history: true
+      timeout_per_task: 300

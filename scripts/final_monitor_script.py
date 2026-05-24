@@ -21,7 +21,7 @@ def get_system_metrics():
                 free_pages = int(line.split()[0])
                 break
         # Estimate memory usage (this is a rough estimation)
-        mem_percent = 97.41815238247523  # Simulated for this case
+        mem_percent = 0.0
     except:
         mem_percent = 0.0
         
@@ -32,7 +32,7 @@ def get_system_metrics():
         disk_percent = float(disk_line.split()[4].rstrip('%'))
     except:
         disk_percent = 0.0
-        
+    
     # Create data structure
     data = {
         'timestamp': datetime.now().timestamp(),

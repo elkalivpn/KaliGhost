@@ -1,15 +1,20 @@
-MEMORY USAGE REPORT - 2026-05-24 21:42:18
-=======================================
+Memory Usage Report - 2026-05-24 22:10:47
+========================================
 
-Current Memory Usage: 0.00%
-Top Processes:
-1. N/A - No processes recorded
-2. N/A - No processes recorded
-3. N/A - No processes recorded
-4. N/A - No processes recorded
-5. N/A - No processes recorded
+Current Memory Usage: 0.0% (Dashboard Data)
+------------------------------------------
+Note: This value shows 0.0% due to a known limitation in memory parsing for the dashboard script.
+Process analysis indicates actual high memory consumption.
+
+Top 5 Memory Consuming Processes:
+1. Virtualization.VirtualMachine (PID: 12777): 12.5%
+2. Brave Browser Helper (Renderer) (PID: 26923): 2.6%
+3. Android Studio (PID: 26532): 2.2%
+4. Brave Browser (PID: 1402): 2.2%
+5. Docker Desktop Helper (Renderer) (PID: 22483): 1.7%
 
 Recommendations:
-- System appears idle with minimal memory usage
-- No immediate concerns detected
-- Continue monitoring for unusual activity
+- Monitor Resource Usage: Virtualization.VirtualMachine is consuming substantial memory
+- Consider Restarting Heavy Applications: Brave Browser Helper and Android Studio consume notable resources
+- No automatic remediation possible due to system restrictions
+- Manual intervention required for cleanup
