@@ -405,3 +405,66 @@ Built with cutting-edge Python async frameworks, containerization best practices
 [⬆ Back to Top](#-kalighost-30)
 
 </div>
+
+---
+
+## ⚙️ Complete Customization
+
+**KaliGhost 3.0 is 100% configurable. Customize everything:**
+
+### ✅ What You Can Customize
+
+- 🤖 **Agent Behaviors** - Temperature, timeout, retries, tokens
+- 💬 **System Prompts** - Full control, no restrictions
+- 🧠 **Models** - Switch between any LLM (GPT-4, Claude, local models)
+- 🔄 **Workflows** - Create custom, dynamic workflows
+- 🎚️ **Features** - Enable/disable any feature
+- 🔒 **Security** - All security parameters
+- ⚡ **Performance** - Caching, pooling, workers
+- 🏷️ **Identity** - Custom branding, messages, colors
+- 🔌 **Integrations** - All integrations
+
+### Configuration Methods
+
+```bash
+# 1. YAML Configuration
+edit config/kalighost_config.yaml
+
+# 2. Environment Variables
+export KALIGHOST_MODE=production
+export OPENAI_API_KEY=sk-your-key
+
+# 3. Runtime API
+curl -X POST http://localhost:8000/config \
+  -d '{"path": "agents.orchestrator.temperature", "value": 0.3}'
+
+# 4. Python API
+from backend.config_manager import set_config_value
+set_config_value("agents.orchestrator.temperature", 0.3)
+```
+
+### Example: Customize Agent
+
+```python
+from backend.config_manager import configure_agent, update_system_prompt
+
+# Customize behavior
+configure_agent(
+    "orchestrator",
+    temperature=0.3,
+    timeout_seconds=600,
+    max_retries=5
+)
+
+# Customize system prompt
+update_system_prompt("orchestrator", """
+You are my custom orchestrator.
+Priority: Security first, then scalability.
+""")
+```
+
+### See Full Guide
+
+👉 **[CUSTOMIZATION_GUIDE.md](./CUSTOMIZATION_GUIDE.md)** - Complete customization documentation
+
+---
