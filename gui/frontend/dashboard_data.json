@@ -1,12 +1,12 @@
 {
-  "timestamp": 1779659447.753576,
+  "timestamp": 1779745861.922467,
   "cpu": {
     "percent": 0.0
   },
   "memory": {
-    "percent": 0.0
+    "percent": 98.56
   },
   "disk": {
-    "percent": 51.0
+    "percent": 25.0
   }
 }

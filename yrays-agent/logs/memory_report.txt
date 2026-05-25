@@ -1,20 +1,23 @@
-Memory Usage Report - 2026-05-24 22:10:47
-========================================
+Memory Usage Report - Generated on 2026-05-25 15:50:27 UTC
+Current Memory Usage: 98.6%
+Top Memory Consumers:
+1. Virtualization.VirtualMachine - 10.3% (PID: 12777)
+2. Mullvad Browser - 3.4% (PID: 37294)
+3. fileproviderd - 1.7% (PID: 624)
+4. Brave Browser - 1.5% (PID: 1402)
+5. plugin-container - 1.4% (PID: 37307)
 
-Current Memory Usage: 0.0% (Dashboard Data)
-------------------------------------------
-Note: This value shows 0.0% due to a known limitation in memory parsing for the dashboard script.
-Process analysis indicates actual high memory consumption.
-
-Top 5 Memory Consuming Processes:
-1. Virtualization.VirtualMachine (PID: 12777): 12.5%
-2. Brave Browser Helper (Renderer) (PID: 26923): 2.6%
-3. Android Studio (PID: 26532): 2.2%
-4. Brave Browser (PID: 1402): 2.2%
-5. Docker Desktop Helper (Renderer) (PID: 22483): 1.7%
-
-Recommendations:
-- Monitor Resource Usage: Virtualization.VirtualMachine is consuming substantial memory
-- Consider Restarting Heavy Applications: Brave Browser Helper and Android Studio consume notable resources
-- No automatic remediation possible due to system restrictions
-- Manual intervention required for cleanup
+CRITICAL: High memory usage detected (98.6%). This exceeds the 90% threshold and requires attention.[CRITICAL] High memory usage detected: 98.70928899276512%
+Top memory-consuming processes:
+PID: mrhardcore, %MEM: 9.4, COMMAND: /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualization.VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine
+PID: mrhardcore, %MEM: 3.6, COMMAND: /Applications/Mullvad Browser.app/Contents/MacOS/mullvadbrowser
+PID: mrhardcore, %MEM: 1.7, COMMAND: /System/Library/PrivateFrameworks/FileProvider.framework/Support/fileproviderd
+PID: mrhardcore, %MEM: 1.7, COMMAND: /Applications/Brave Browser.app/Contents/MacOS/Brave Browser
+PID: mrhardcore, %MEM: 1.5, COMMAND: node /Users/mrhardcore/.hermes/lsp/bin/pyright-langserver --stdio
+[CRITICAL] High memory usage detected: 98.55984587525698%
+Top memory-consuming processes:
+PID: mrhardcore, %MEM: 9.6, COMMAND: /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualization.VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine
+PID: mrhardcore, %MEM: 3.7, COMMAND: /Applications/Mullvad Browser.app/Contents/MacOS/mullvadbrowser
+PID: mrhardcore, %MEM: 2.4, COMMAND: /Applications/Mullvad Browser.app/Contents/MacOS/plugin-container.app/Contents/MacOS/plugin-container -isForBrowser -prefsHandle 0:27740 -prefMapHandle 1:274849 -jsInitHandle 2:242716 -sbStartup -sbAppPath /Applications/Mullvad Browser.app -sbLevel 3 -parentBuildID 20260518170000 -ipcHandle 0 -initialChannelId {e30a6c9a-9839-442a-b838-bcb22a1e3455} -parentPid 37294 -greomni /Applications/Mullvad Browser.app/Contents/Resources/omni.ja -appomni /Applications/Mullvad Browser.app/Contents/Resources/browser/omni.ja -appDir /Applications/Mullvad Browser.app/Contents/Resources/browser -profile /Users/mrhardcore/Library/Application Support/MullvadBrowser/Profiles/z3rwkahh.default-release org.mozilla.machname.919321021 19 tab
+PID: mrhardcore, %MEM: 2.3, COMMAND: /Applications/Mullvad Browser.app/Contents/MacOS/plugin-container.app/Contents/MacOS/plugin-container -isForBrowser -prefsHandle 0:27555 -prefMapHandle 1:274849 -jsInitHandle 2:242716 -sbStartup -sbAppPath /Applications/Mullvad Browser.app -sbLevel 3 -parentBuildID 20260518170000 -ipcHandle 0 -initialChannelId {510aa2f5-9e3d-4e9b-b15a-d091133446b4} -parentPid 37294 -greomni /Applications/Mullvad Browser.app/Contents/Resources/omni.ja -appomni /Applications/Mullvad Browser.app/Contents/Resources/browser/omni.ja -appDir /Applications/Mullvad Browser.app/Contents/Resources/browser -profile /Users/mrhardcore/Library/Application Support/MullvadBrowser/Profiles/z3rwkahh.default-release org.mozilla.machname.1205876328 7 tab
+PID: mrhardcore, %MEM: 1.7, COMMAND: /System/Library/PrivateFrameworks/FileProvider.framework/Support/fileproviderd
