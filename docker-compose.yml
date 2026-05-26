@@ -49,7 +49,7 @@ services:
   # SANDBOX (Code Execution - Docker-in-Docker)
   # ============================================================================
   sandbox:
-    image: docker:dind-alpine
+    image: docker:dind
     container_name: kalighost-sandbox
     privileged: true
     environment:

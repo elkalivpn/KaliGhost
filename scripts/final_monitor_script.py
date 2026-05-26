@@ -79,26 +79,6 @@ def get_system_metrics():
         json.dump(data, f, indent=2)
         
     print(f'Updated dashboard data with: {data}')
-    
-    # Also log to monitoring log for critical memory alerts
-    if mem_percent > 90:
-        log_content = f"[CRITICAL] High memory usage detected: {mem_percent}%\n"
-        process_result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=10)
-        if process_result.returncode == 0:
-            lines = process_result.stdout.split('\n')[1:]  # Skip header
-            sorted_processes = sorted(lines, key=lambda x: float(x.split()[3]) if len(x.split()) > 3 else 0, reverse=True)
-            top_processes = sorted_processes[:5]
-            log_content += "Top memory-consuming processes:\n"
-            for proc in top_processes:
-                parts = proc.split()
-                if len(parts) >= 4:
-                    log_content += f"PID: {parts[0]}, %MEM: {parts[3]}, COMMAND: {' '.join(parts[10:])}\n"
-        # Write to both log files for redundancy
-        with open(os.path.expanduser('~/KaliGhost/yrays-agent/logs/monitoring.log'), 'a') as f:
-            f.write(log_content)
-        with open(os.path.expanduser('~/KaliGhost/yrays-agent/logs/memory_report.txt'), 'a') as f:
-            f.write(log_content)
-        print(log_content)
 
 if __name__ == '__main__':
     get_system_metrics()
