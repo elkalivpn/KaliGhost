@@ -1,21 +1,19 @@
 """
-KaliGhost 3.0 Backend Modules
-
-All modules are 100% customizable at runtime.
+KaliGhost 4.0 ULTIMATE - Hybrid Dual-Core Architecture
+=======================================================
+Núcleo Fantasma: Operaciones ofensivas, ejecución en RAM, steganografía
+Núcleo Legítimo: Fachada corporativa, camuflaje, gestión
 """
 
-from backend.config_manager_lite import (
-    get_config_manager,
-    configure_agent,
-    update_system_prompt,
-    set_config_value,
-    get_config_value,
-)
+from .config_loader import ConfigLoader
+from .security import SecurityManager
+from .logger import GhostLogger
+
+__version__ = "4.0-ULTIMATE"
+__author__ = "KaliGhost Team"
 
 __all__ = [
-    "get_config_manager",
-    "configure_agent",
-    "update_system_prompt",
-    "set_config_value",
-    "get_config_value",
+    "ConfigLoader",
+    "SecurityManager", 
+    "GhostLogger"
 ]
