@@ -1,0 +1,346 @@
+!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KaliGhost 4.0 ULTIMATE | Elite Cybersecurity AI</title>
+    <meta name="description" content="La primera plataforma de IA de ciberseguridad que aprende de ti sin que tus datos salgan de tu entorno. Red Team, Blue Team y ModelForge local.">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e0e0e0;
+            --primary: #00ff9d; /* Verde Hacker */
+            --secondary: #7000ff; /* Morado Cyber */
+            --accent: #ff0055; /* Rojo Alerta */
+            --card-bg: #111111;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Efecto Matrix de fondo sutil */
+        .matrix-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        header {
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: var(--font-mono);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), #00cc7a);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 8rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            color: #aaa;
+            max-width: 800px;
+            margin: 0 auto 3rem auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 4rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid #333;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .pricing-section {
+            padding: 6rem 5%;
+            text-align: center;
+            background: #0a0a0a;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 3rem auto 0;
+        }
+
+        .price-card {
+            background: var(--card-bg);
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            border: 1px solid #333;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-card.popular {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.1);
+        }
+
+        .badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            color: #fff;
+        }
+
+        .price span { font-size: 1rem; color: #888; }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2rem;
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .features-list li {
+            margin-bottom: 0.8rem;
+            color: #ccc;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: var(--primary);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem;
+            border-top: 1px solid #333;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .legal-links a {
+            color: #888;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        
+        .terminal-window {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            text-align: left;
+            margin: 2rem auto;
+            max-width: 600px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .cmd { color: var(--primary); }
+        .output { color: #888; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="matrix-bg"></div>
+
+    <header>
+        <div class="logo">KaliGhost<span style="color:#fff">4.0</span></div>
+        <a href="#pricing" class="btn btn-primary">Obtener Acceso</a>
+    </header>
+
+    <section class="hero">
+        <h1>El Primer IDE de Ciberseguridad con IA Local</h1>
+        <p>Entrena modelos de IA ofensivos y defensivos con tus propios datos. Sin nube. Sin censura. Sin límites.</p>
+        
+        <div class="terminal-window">
+            <div><span class="cmd">$</span> git clone https://github.com/elkalivpn/KaliGhost.git</div>
+            <div><span class="cmd">$</span> cd KaliGhost && ./install.sh</div>
+            <div class="output">> Initializing ModelForge Core...<br>> Loading Red Team Modules...<br>> System Ready. Welcome, Operator.</div>
+        </div>
+
+        <a href="https://github.com/elkalivpn/KaliGhost" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem;">Clonar Repositorio Gratis</a>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">Compatible con Linux, macOS y Windows (WSL)</p>
+    </section>
+
+    <section class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>ModelForge Local</h3>
+            <p>Entrena y ajusta modelos de IA directamente en tu hardware. Tus datos de exploits y vulnerabilidades nunca salen de tu máquina.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚔️</div>
+            <h3>Red Team Autónomo</h3>
+            <p>Agentes de IA que planifican y ejecutan simulaciones de ataque completas, mapeo MITRE ATT&CK y generación de informes.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Blue Team & Forensics</h3>
+            <p>Detección de amenazas en tiempo real, análisis de memoria RAM y respuesta automática a incidentes.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">👻</div>
+            <h3>Ejecución Fantasma</h3>
+            <p>Sandbox efímeros y ejecución exclusiva en RAM. Sin rastros en disco. Esteganografía avanzada integrada.</p>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing-section">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Planes de Licencia</h2>
+        <p style="color: #888; margin-bottom: 3rem;">Elige el nivel de potencia que necesitas</p>
+
+        <div class="pricing-grid">
+            <!-- Plan Community -->
+            <div class="price-card">
+                <h3>Community</h3>
+                <div class="price">$0<span>/mes</span></div>
+                <ul class="features-list">
+                    <li>Acceso al Core Orchestrator</li>
+                    <li>Módulos básicos de Red/Blue Team</li>
+                    <li>Comunidad de Discord</li>
+                    <li>Actualizaciones de seguridad</li>
+                    <li>Licencia GPL v3</li>
+                </ul>
+                <a href="https://github.com/elkalivpn/KaliGhost" class="btn" style="border: 1px solid #fff; color: #fff;">Descargar Gratis</a>
+            </div>
+
+            <!-- Plan Pro -->
+            <div class="price-card popular">
+                <div class="badge">MÁS POPULAR</div>
+                <h3>Pro Hacker</h3>
+                <div class="price">$29<span>/mes</span></div>
+                <ul class="features-list">
+                    <li><strong>Todo lo de Community +</strong></li>
+                    <li>ModelForge (Fine-tuning local)</li>
+                    <li>Módulos Grey Team (Phishing/Social Eng)</li>
+                    <li>Generador de Payloads Polimórficos</li>
+                    <li>Soporte Prioritario 24/7</li>
+                    <li>Licencia Comercial Individual</li>
+                </ul>
+                <button class="btn btn-primary" onclick="alert('Redirigiendo a Stripe Checkout...')">Suscribirse Ahora</button>
+            </div>
+
+            <!-- Plan Enterprise -->
+            <div class="price-card">
+                <h3>Enterprise</h3>
+                <div class="price">$299<span>/mes</span></div>
+                <ul class="features-list">
+                    <li><strong>Todo lo de Pro +</strong></li>
+                    <li>Despliegue en Clúster Kubernetes</li>
+                    <li>API Dedicada y Webhooks</li>
+                    <li>Múltiples usuarios y roles</li>
+                    <li>SLA Garantizado</li>
+                    <li>Licencia Corporativa Ilimitada</li>
+                </ul>
+                <button class="btn" style="border: 1px solid #fff; color: #fff;">Contactar Ventas</button>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="legal-links">
+            <a href="/LEGAL/TERMS_OF_SERVICE.md">Términos de Servicio</a>
+            <a href="/LEGAL/PRIVACY_POLICY.md">Privacidad</a>
+            <a href="/LEGAL/EULA.md">EULA</a>
+            <a href="/LEGAL/DISCLAIMER.md">Disclaimer</a>
+        </div>
+        <p style="margin-top: 1rem;">&copy; 2024 KaliGhost Security. Todos los derechos reservados.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #444;">Diseñado para profesionales de la seguridad. Úsalo responsablemente.</p>
+    </footer>
+
+</body>
+</html>
