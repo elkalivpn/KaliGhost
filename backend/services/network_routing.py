@@ -1,569 +1,518 @@
 """
-KaliGhost 4.0 ULTIMATE - Network Routing Engine
-Enrutamiento de red por proceso con aislamiento completo
-Capacidades: Network namespaces, Tor routing, Proxy chains, VPN, Identity switching
+KaliGhost IDE - Per-Process Network Routing Module
+Implements dynamic network routing on a per-process basis.
+Each process can have its own network namespace, proxy chain, and identity.
 """
 
 import os
 import sys
-import json
 import subprocess
-import socket
-import random
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
-from pathlib import Path
 import threading
 import time
+import secrets
+import socket
+from typing import Dict, List, Optional, Tuple, Any
+from dataclasses import dataclass
+from enum import Enum
+import json
 
 
-class NetworkNamespace:
-    """Gestión de network namespaces Linux para aislamiento de red"""
-    
-    def __init__(self, name: str):
-        self.name = name
-        self.created = False
-        self.interfaces = []
-        self.routes = []
-        
-    def create(self) -> bool:
-        """Crea un nuevo network namespace"""
-        try:
-            # Verificar si iproute2 está disponible
-            result = subprocess.run(
-                ['ip', 'netns', 'add', self.name],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                self.created = True
-                print(f"[+] Network namespace '{self.name}' creado")
-                return True
-            else:
-                print(f"[!] Error creando namespace: {result.stderr}")
-                return False
-        except FileNotFoundError:
-            print("[!] iproute2 no encontrado. Usando modo simulado.")
-            self.created = True  # Modo simulado
-            return True
-        except Exception as e:
-            print(f"[!] Excepción creando namespace: {e}")
-            return False
-    
-    def delete(self) -> bool:
-        """Elimina el network namespace"""
-        if not self.created:
-            return False
-            
-        try:
-            subprocess.run(['ip', 'netns', 'delete', self.name], check=True)
-            self.created = False
-            print(f"[-] Network namespace '{self.name}' eliminado")
-            return True
-        except Exception as e:
-            print(f"[!] Error eliminando namespace: {e}")
-            return False
-    
-    def add_interface(self, interface: str) -> bool:
-        """Añade una interfaz al namespace"""
-        if not self.created:
-            return False
-            
-        try:
-            subprocess.run(
-                ['ip', 'link', 'set', interface, 'netns', self.name],
-                check=True,
-                capture_output=True
-            )
-            self.interfaces.append(interface)
-            print(f"[+] Interfaz '{interface}' añadida al namespace")
-            return True
-        except Exception as e:
-            print(f"[!] Error añadiendo interfaz: {e}")
-            return False
-    
-    def set_ip(self, interface: str, ip_address: str, cidr: int = 24) -> bool:
-        """Configura IP en una interfaz del namespace"""
-        if not self.created:
-            return False
-            
-        try:
-            full_ip = f"{ip_address}/{cidr}"
-            subprocess.run(
-                ['ip', 'netns', 'exec', self.name, 'ip', 'addr', 'add', full_ip, 'dev', interface],
-                check=True,
-                capture_output=True
-            )
-            print(f"[+] IP {full_ip} configurada en {interface}")
-            return True
-        except Exception as e:
-            print(f"[!] Error configurando IP: {e}")
-            return False
-    
-    def add_route(self, destination: str, gateway: str) -> bool:
-        """Añade una ruta al namespace"""
-        if not self.created:
-            return False
-            
-        try:
-            subprocess.run(
-                ['ip', 'netns', 'exec', self.name, 'ip', 'route', 'add', destination, 'via', gateway],
-                check=True,
-                capture_output=True
-            )
-            self.routes.append({'destination': destination, 'gateway': gateway})
-            print(f"[+] Ruta {destination} via {gateway} añadida")
-            return True
-        except Exception as e:
-            print(f"[!] Error añadiendo ruta: {e}")
-            return False
-    
-    def execute(self, command: List[str]) -> Tuple[int, str, str]:
-        """Ejecuta un comando dentro del namespace"""
-        if not self.created:
-            return -1, "", "Namespace no creado"
-            
-        try:
-            full_command = ['ip', 'netns', 'exec', self.name] + command
-            result = subprocess.run(
-                full_command,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            return result.returncode, result.stdout, result.stderr
-        except Exception as e:
-            return -1, "", str(e)
-    
-    def get_info(self) -> Dict[str, Any]:
-        """Obtiene información del namespace"""
-        return {
-            'name': self.name,
-            'created': self.created,
-            'interfaces': self.interfaces,
-            'routes': self.routes,
-            'timestamp': datetime.now().isoformat()
-        }
+class RoutingMode(Enum):
+    """Network routing modes for processes."""
+    DIRECT = "direct"           # Direct connection
+    TOR = "tor"                 # Route through Tor
+    PROXY_CHAIN = "proxy_chain" # Multiple proxies
+    VPN = "vpn"                 # VPN tunnel
+    ISOLATED = "isolated"       # No external network
 
 
-class TorRouter:
-    """Enrutamiento de tráfico a través de la red Tor"""
+@dataclass
+class ProxyConfig:
+    """Configuration for a proxy server."""
+    host: str
+    port: int
+    protocol: str  # http, https, socks4, socks5
+    username: Optional[str] = None
+    password: Optional[str] = None
     
-    def __init__(self, tor_port: int = 9050):
-        self.tor_port = tor_port
-        self.tor_process = None
-        self.active = False
-        
-    def start(self) -> bool:
-        """Inicia conexión Tor (simulado si Tor no está instalado)"""
-        try:
-            # Verificar si Tor está instalado
-            result = subprocess.run(['tor', '--version'], capture_output=True, text=True)
-            if result.returncode == 0:
-                print("[*] Tor detectado, iniciando...")
-                # En producción, iniciar Tor con configuración adecuada
-                self.active = True
-                print("[+] Tor router activado")
-                return True
-            else:
-                print("[!] Tor no encontrado. Usando modo simulado.")
-                self.active = True  # Modo simulado
-                return True
-        except FileNotFoundError:
-            print("[!] Tor no encontrado. Usando modo simulado.")
-            self.active = True
-            return True
-        except Exception as e:
-            print(f"[!] Error iniciando Tor: {e}")
-            return False
-    
-    def stop(self) -> bool:
-        """Detiene conexión Tor"""
-        self.active = False
-        if self.tor_process:
-            try:
-                self.tor_process.terminate()
-            except:
-                pass
-        print("[-] Tor router desactivado")
-        return True
-    
-    def get_identity(self) -> Dict[str, Any]:
-        """Obtiene identidad Tor actual (IP de salida)"""
-        if not self.active:
-            return {'active': False}
-            
-        # Simulación de nueva identidad Tor
-        exit_ips = [
-            '185.220.101.45', '104.244.76.13', '199.249.230.89',
-            '171.25.193.77', '198.96.155.3', '109.70.100.33'
-        ]
-        
-        return {
-            'active': True,
-            'exit_ip': random.choice(exit_ips),
-            'circuit_length': 3,
-            'entry_guard': 'random_guard',
-            'middle_relay': 'random_middle',
-            'exit_relay': 'random_exit',
-            'timestamp': datetime.now().isoformat()
-        }
-    
-    def new_identity(self) -> bool:
-        """Solicita nueva identidad Tor (nuevo circuito)"""
-        if not self.active:
-            return False
-            
-        print("[*] Solicitando nueva identidad Tor...")
-        time.sleep(0.5)  # Simular delay
-        identity = self.get_identity()
-        print(f"[+] Nueva identidad: {identity['exit_ip']}")
-        return True
+    def to_url(self) -> str:
+        """Convert to proxy URL format."""
+        auth = ""
+        if self.username and self.password:
+            auth = f"{self.username}:{self.password}@"
+        return f"{self.protocol}://{auth}{self.host}:{self.port}"
 
 
-class ProxyChain:
-    """Cadena de proxies para anonimato multi-salto"""
+@dataclass
+class ProcessNetworkConfig:
+    """Network configuration for a specific process."""
+    pid: int
+    mode: RoutingMode
+    proxy_chain: List[ProxyConfig]
+    dns_server: str
+    bandwidth_limit: Optional[int]  # bytes/sec
+    allowed_ports: List[int]
+    blocked_ips: List[str]
+    network_namespace: str
+
+
+class NetworkNamespaceManager:
+    """
+    Manages Linux network namespaces for process isolation.
+    Each namespace has its own routing table, interfaces, and firewall rules.
+    """
     
     def __init__(self):
-        self.chain = []
-        self.active = False
+        self.namespaces: Dict[str, ProcessNetworkConfig] = {}
+        self.lock = threading.Lock()
         
-    def add_proxy(self, proxy_type: str, host: str, port: int, 
-                  username: Optional[str] = None, password: Optional[str] = None) -> bool:
-        """Añade un proxy a la cadena"""
-        proxy = {
-            'type': proxy_type,  # http, socks4, socks5
-            'host': host,
-            'port': port,
-            'username': username,
-            'password': password,
-            'status': 'pending'
-        }
-        self.chain.append(proxy)
-        print(f"[+] Proxy {proxy_type}://{host}:{port} añadido a la cadena")
-        return True
-    
-    def remove_proxy(self, index: int) -> bool:
-        """Elimina un proxy de la cadena"""
-        if 0 <= index < len(self.chain):
-            removed = self.chain.pop(index)
-            print(f"[-] Proxy {removed['host']} eliminado")
-            return True
-        return False
-    
-    def validate_chain(self) -> Dict[str, Any]:
-        """Valida que todos los proxies en la cadena funcionen"""
-        results = []
+    def create_namespace(self, name: str, config: ProcessNetworkConfig) -> bool:
+        """
+        Create a new network namespace with specific configuration.
         
-        for i, proxy in enumerate(self.chain):
-            status = self._test_proxy(proxy)
-            proxy['status'] = 'active' if status else 'failed'
-            results.append({
-                'index': i,
-                'proxy': f"{proxy['host']}:{proxy['port']}",
-                'status': proxy['status']
-            })
+        Args:
+            name: Namespace name
+            config: Network configuration
             
-        self.active = all(p['status'] == 'active' for p in self.chain)
-        return {
-            'chain_valid': self.active,
-            'proxies': results,
-            'total_hops': len(self.chain)
-        }
-    
-    def _test_proxy(self, proxy: Dict) -> bool:
-        """Testea conectividad a un proxy"""
+        Returns:
+            True if successful
+        """
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            result = sock.connect_ex((proxy['host'], proxy['port']))
-            sock.close()
-            return result == 0
-        except:
+            with self.lock:
+                # Create network namespace
+                subprocess.run(
+                    ['ip', 'netns', 'add', name],
+                    check=True, capture_output=True
+                )
+                
+                # Create veth pair for connectivity
+                veth_a = f"veth_{name[:8]}"
+                veth_b = f"veth_{name[-8:]}"
+                
+                subprocess.run(
+                    ['ip', 'link', 'add', veth_a, 'type', 'veth', 'peer', 'name', veth_b],
+                    check=True, capture_output=True
+                )
+                
+                # Move one end to namespace
+                subprocess.run(
+                    ['ip', 'link', 'set', veth_b, 'netns', name],
+                    check=True, capture_output=True
+                )
+                
+                # Configure namespace interface
+                self._configure_namespace_interface(name, veth_b, config)
+                
+                # Set up routing based on mode
+                self._setup_routing(name, config)
+                
+                # Store configuration
+                self.namespaces[name] = config
+                
+                return True
+                
+        except subprocess.CalledProcessError as e:
+            print(f"Error creating namespace: {e.stderr.decode()}")
+            return False
+        except Exception as e:
+            print(f"Error creating namespace: {e}")
             return False
     
-    def get_chain_info(self) -> Dict[str, Any]:
-        """Obtiene información de la cadena de proxies"""
-        return {
-            'active': self.active,
-            'total_hops': len(self.chain),
-            'chain': [
-                f"{p['type']}://{p['host']}:{p['port']}" 
-                for p in self.chain
-            ],
-            'timestamp': datetime.now().isoformat()
-        }
+    def _configure_namespace_interface(self, ns_name: str, iface: str, 
+                                       config: ProcessNetworkConfig):
+        """Configure network interface inside namespace."""
+        commands = [
+            f'ip netns exec {ns_name} ip link set lo up',
+            f'ip netns exec {ns_name} ip link set {iface} up',
+            f'ip netns exec {ns_name} ip addr add 10.{secrets.randbelow(256)}.{secrets.randbelow(256)}.2/24 dev {iface}',
+        ]
+        
+        for cmd in commands:
+            subprocess.run(cmd.split(), capture_output=True)
+    
+    def _setup_routing(self, ns_name: str, config: ProcessNetworkConfig):
+        """Set up routing rules based on mode."""
+        if config.mode == RoutingMode.ISOLATED:
+            # Block all external traffic
+            subprocess.run(
+                f'ip netns exec {ns_name} iptables -A OUTPUT -d 10.0.0.0/8 -j ACCEPT',
+                shell=True, capture_output=True
+            )
+            subprocess.run(
+                f'ip netns exec {ns_name} iptables -A OUTPUT -j DROP',
+                shell=True, capture_output=True
+            )
+            
+        elif config.mode == RoutingMode.TOR:
+            # Redirect all traffic through Tor
+            tor_port = 9050
+            subprocess.run(
+                f'ip netns exec {ns_name} iptables -t nat -A OUTPUT -p tcp --dport 1:{tor_port-1} -j REDIRECT --to-ports {tor_port}',
+                shell=True, capture_output=True
+            )
+            
+        elif config.mode == RoutingMode.PROXY_CHAIN:
+            # Set up proxychains configuration
+            self._configure_proxychains(ns_name, config.proxy_chain)
+    
+    def _configure_proxychains(self, ns_name: str, proxy_chain: List[ProxyConfig]):
+        """Configure proxychains for the namespace."""
+        config_lines = ["[ProxyList]"]
+        
+        for proxy in proxy_chain:
+            config_lines.append(
+                f"{proxy.protocol} {proxy.host} {proxy.port} {proxy.username or ''} {proxy.password or ''}"
+            )
+        
+        config_content = "\n".join(config_lines)
+        config_path = f"/tmp/proxychains_{ns_name}.conf"
+        
+        with open(config_path, 'w') as f:
+            f.write(config_content)
+        
+        # This would be used with proxychains-ng in practice
+    
+    def execute_in_namespace(self, ns_name: str, command: List[str]) -> subprocess.Popen:
+        """
+        Execute a command within a specific network namespace.
+        
+        Args:
+            ns_name: Namespace name
+            command: Command to execute
+            
+        Returns:
+            Popen object for the process
+        """
+        if ns_name not in self.namespaces:
+            raise ValueError(f"Namespace {ns_name} does not exist")
+        
+        full_command = ['ip', 'netns', 'exec', ns_name] + command
+        
+        return subprocess.Popen(
+            full_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+    
+    def delete_namespace(self, name: str) -> bool:
+        """Delete a network namespace."""
+        try:
+            with self.lock:
+                if name not in self.namespaces:
+                    return False
+                
+                # Delete the namespace
+                subprocess.run(
+                    ['ip', 'netns', 'delete', name],
+                    check=True, capture_output=True
+                )
+                
+                del self.namespaces[name]
+                return True
+                
+        except Exception as e:
+            print(f"Error deleting namespace: {e}")
+            return False
+    
+    def list_namespaces(self) -> List[str]:
+        """List all active namespaces."""
+        with self.lock:
+            return list(self.namespaces.keys())
+    
+    def get_namespace_config(self, name: str) -> Optional[ProcessNetworkConfig]:
+        """Get configuration for a namespace."""
+        with self.lock:
+            return self.namespaces.get(name)
 
 
 class DynamicRoutingEngine:
-    """Motor principal de enrutamiento dinámico de red"""
+    """
+    Main engine for dynamic per-process network routing.
+    Integrates with network namespaces and provides high-level API.
+    """
     
     def __init__(self):
-        self.namespaces: Dict[str, NetworkNamespace] = {}
-        self.tor_router = TorRouter()
-        self.proxy_chain = ProxyChain()
-        self.current_mode = 'direct'
-        self.process_routes: Dict[int, str] = {}  # PID -> modo de red
+        self.ns_manager = NetworkNamespaceManager()
+        self.process_routes: Dict[int, str] = {}  # PID -> namespace mapping
+        self.tor_process: Optional[subprocess.Popen] = None
+        self.lock = threading.Lock()
         
-    def create_namespace(self, name: str) -> Optional[NetworkNamespace]:
-        """Crea un nuevo network namespace"""
-        if name in self.namespaces:
-            print(f"[!] Namespace '{name}' ya existe")
-            return None
+    def start_tor(self, torrc_path: Optional[str] = None) -> bool:
+        """Start Tor daemon for anonymous routing."""
+        try:
+            tor_cmd = ['tor']
+            if torrc_path:
+                tor_cmd.extend(['-f', torrc_path])
             
-        ns = NetworkNamespace(name)
-        if ns.create():
-            self.namespaces[name] = ns
-            return ns
-        return None
-    
-    def delete_namespace(self, name: str) -> bool:
-        """Elimina un network namespace"""
-        if name not in self.namespaces:
-            return False
+            self.tor_process = subprocess.Popen(
+                tor_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
             
-        ns = self.namespaces[name]
-        if ns.delete():
-            del self.namespaces[name]
-            return True
-        return False
-    
-    def set_routing_mode(self, pid: int, mode: str) -> bool:
-        """
-        Configura modo de enrutamiento para un proceso específico
-        Modes: direct, tor, proxy, vpn, isolated
-        """
-        valid_modes = ['direct', 'tor', 'proxy', 'vpn', 'isolated']
-        if mode not in valid_modes:
-            print(f"[!] Modo '{mode}' no válido. Opciones: {valid_modes}")
-            return False
+            # Wait for Tor to start
+            time.sleep(3)
             
-        self.process_routes[pid] = mode
-        print(f"[+] Proceso {pid} configurado con modo: {mode}")
-        
-        # Configurar según el modo
-        if mode == 'tor':
-            return self._setup_tor_for_process(pid)
-        elif mode == 'proxy':
-            return self._setup_proxy_for_process(pid)
-        elif mode == 'isolated':
-            return self._setup_isolated_for_process(pid)
-        elif mode == 'vpn':
-            return self._setup_vpn_for_process(pid)
-            
-        return True
-    
-    def _setup_tor_for_process(self, pid: int) -> bool:
-        """Configura enrutamiento Tor para un proceso"""
-        if not self.tor_router.active:
-            if not self.tor_router.start():
+            # Verify Tor is running
+            if self.tor_process.poll() is not None:
+                print("Tor failed to start")
                 return False
-                
-        print(f"[*] Configurando Tor para proceso {pid}")
-        # En producción, usar iptables/nftables para redirigir tráfico
-        return True
-    
-    def _setup_proxy_for_process(self, pid: int) -> bool:
-        """Configura cadena de proxies para un proceso"""
-        if not self.proxy_chain.active:
-            print("[!] Cadena de proxies no válida")
-            return False
             
-        print(f"[*] Configurando proxy chain para proceso {pid}")
-        # En producción, configurar environment variables o iptables
-        return True
-    
-    def _setup_isolated_for_process(self, pid: int) -> bool:
-        """Configura aislamiento total de red para un proceso"""
-        ns_name = f"isolated_{pid}"
-        ns = self.create_namespace(ns_name)
-        if not ns:
-            return False
+            return True
             
-        # Configurar solo loopback en el namespace aislado
-        ns.execute(['ip', 'link', 'set', 'lo', 'up'])
-        ns.execute(['ip', 'addr', 'add', '127.0.0.1/8', 'dev', 'lo'])
-        
-        print(f"[+] Proceso {pid} completamente aislado en namespace '{ns_name}'")
-        return True
+        except FileNotFoundError:
+            print("Tor not found. Install with: apt install tor")
+            return False
+        except Exception as e:
+            print(f"Error starting Tor: {e}")
+            return False
     
-    def _setup_vpn_for_process(self, pid: int) -> bool:
-        """Configura VPN para un proceso"""
-        print(f"[*] Configurando VPN para proceso {pid}")
-        # En producción, crear interfaz tun/tap y enrutar
-        return True
+    def stop_tor(self):
+        """Stop Tor daemon."""
+        if self.tor_process:
+            self.tor_process.terminate()
+            self.tor_process.wait()
+            self.tor_process = None
     
-    def change_identity(self, pid: int) -> Dict[str, Any]:
-        """Cambia identidad de red para un proceso en tiempo real"""
-        mode = self.process_routes.get(pid, 'direct')
+    def assign_network_identity(self, pid: int, mode: RoutingMode,
+                               proxy_chain: List[ProxyConfig] = None,
+                               dns_server: str = "1.1.1.1",
+                               bandwidth_limit: Optional[int] = None,
+                               allowed_ports: List[int] = None,
+                               blocked_ips: List[str] = None) -> Optional[str]:
+        """
+        Assign a network identity to a process.
         
-        if mode == 'tor':
-            success = self.tor_router.new_identity()
-            identity = self.tor_router.get_identity()
-            return {
-                'success': success,
-                'mode': mode,
-                'new_identity': identity
-            }
-        elif mode == 'proxy':
-            # Rotar primer proxy en la cadena
-            if len(self.proxy_chain.chain) > 1:
-                first = self.proxy_chain.chain.pop(0)
-                self.proxy_chain.chain.append(first)
-                self.proxy_chain.validate_chain()
-                
-            return {
-                'success': True,
-                'mode': mode,
-                'chain_info': self.proxy_chain.get_chain_info()
-            }
-        else:
-            return {
-                'success': False,
-                'mode': mode,
-                'error': 'Identity change only available for tor/proxy modes'
-            }
+        Args:
+            pid: Process ID
+            mode: Routing mode
+            proxy_chain: List of proxies (for PROXY_CHAIN mode)
+            dns_server: DNS server to use
+            bandwidth_limit: Bandwidth limit in bytes/sec
+            allowed_ports: List of allowed ports
+            blocked_ips: List of blocked IP addresses
+            
+        Returns:
+            Namespace name if successful
+        """
+        # Generate unique namespace name
+        ns_name = f"kg_{pid}_{secrets.token_hex(4)}"
+        
+        # Create configuration
+        config = ProcessNetworkConfig(
+            pid=pid,
+            mode=mode,
+            proxy_chain=proxy_chain or [],
+            dns_server=dns_server,
+            bandwidth_limit=bandwidth_limit,
+            allowed_ports=allowed_ports or [],
+            blocked_ips=blocked_ips or [],
+            network_namespace=ns_name
+        )
+        
+        # Create namespace
+        if not self.ns_manager.create_namespace(ns_name, config):
+            return None
+        
+        # Move process to namespace
+        try:
+            subprocess.run(
+                ['ip', 'link', 'set', str(pid), 'netns', ns_name],
+                check=True, capture_output=True
+            )
+            
+            with self.lock:
+                self.process_routes[pid] = ns_name
+            
+            return ns_name
+            
+        except Exception as e:
+            print(f"Error assigning network identity: {e}")
+            self.ns_manager.delete_namespace(ns_name)
+            return None
     
-    def get_process_network_info(self, pid: int) -> Dict[str, Any]:
-        """Obtiene información de red de un proceso"""
-        mode = self.process_routes.get(pid, 'direct')
+    def spawn_with_identity(self, command: List[str], mode: RoutingMode,
+                           proxy_chain: List[ProxyConfig] = None,
+                           **kwargs) -> Optional[subprocess.Popen]:
+        """
+        Spawn a new process with a specific network identity.
         
-        info = {
-            'pid': pid,
-            'routing_mode': mode,
-            'timestamp': datetime.now().isoformat()
-        }
+        Args:
+            command: Command to execute
+            mode: Routing mode
+            proxy_chain: Proxy configuration
+            **kwargs: Additional network configuration
+            
+        Returns:
+            Popen object for the process
+        """
+        # Start process normally first
+        process = subprocess.Popen(command)
         
-        if mode == 'tor' and self.tor_router.active:
-            info['tor_identity'] = self.tor_router.get_identity()
-        elif mode == 'proxy' and self.proxy_chain.active:
-            info['proxy_chain'] = self.proxy_chain.get_chain_info()
-        elif mode == 'isolated':
-            ns_name = f"isolated_{pid}"
-            if ns_name in self.namespaces:
-                info['namespace'] = self.namespaces[ns_name].get_info()
-                
-        return info
+        # Assign network identity
+        ns_name = self.assign_network_identity(
+            process.pid, mode, proxy_chain, **kwargs
+        )
+        
+        if not ns_name:
+            process.terminate()
+            return None
+        
+        return process
     
-    def get_all_namespaces(self) -> Dict[str, Any]:
-        """Obtiene información de todos los namespaces"""
+    def change_identity(self, pid: int, new_mode: RoutingMode,
+                       new_proxy_chain: List[ProxyConfig] = None) -> bool:
+        """
+        Change network identity of a running process.
+        
+        Args:
+            pid: Process ID
+            new_mode: New routing mode
+            new_proxy_chain: New proxy configuration
+            
+        Returns:
+            True if successful
+        """
+        with self.lock:
+            if pid not in self.process_routes:
+                return False
+            
+            old_ns = self.process_routes[pid]
+        
+        # Create new namespace with updated config
+        new_ns_name = f"kg_{pid}_{secrets.token_hex(4)}"
+        old_config = self.ns_manager.get_namespace_config(old_ns)
+        
+        if not old_config:
+            return False
+        
+        new_config = ProcessNetworkConfig(
+            pid=pid,
+            mode=new_mode,
+            proxy_chain=new_proxy_chain or old_config.proxy_chain,
+            dns_server=old_config.dns_server,
+            bandwidth_limit=old_config.bandwidth_limit,
+            allowed_ports=old_config.allowed_ports,
+            blocked_ips=old_config.blocked_ips,
+            network_namespace=new_ns_name
+        )
+        
+        if not self.ns_manager.create_namespace(new_ns_name, new_config):
+            return False
+        
+        # Move process to new namespace
+        try:
+            subprocess.run(
+                ['ip', 'link', 'set', str(pid), 'netns', new_ns_name],
+                check=True, capture_output=True
+            )
+            
+            with self.lock:
+                self.process_routes[pid] = new_ns_name
+            
+            # Delete old namespace
+            self.ns_manager.delete_namespace(old_ns)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error changing identity: {e}")
+            self.ns_manager.delete_namespace(new_ns_name)
+            return False
+    
+    def get_process_identity(self, pid: int) -> Optional[Dict[str, Any]]:
+        """Get network identity information for a process."""
+        with self.lock:
+            ns_name = self.process_routes.get(pid)
+        
+        if not ns_name:
+            return None
+        
+        config = self.ns_manager.get_namespace_config(ns_name)
+        if not config:
+            return None
+        
         return {
-            'total': len(self.namespaces),
-            'namespaces': {
-                name: ns.get_info() 
-                for name, ns in self.namespaces.items()
-            }
+            'pid': pid,
+            'namespace': ns_name,
+            'mode': config.mode.value,
+            'proxy_count': len(config.proxy_chain),
+            'dns_server': config.dns_server,
+            'bandwidth_limit': config.bandwidth_limit,
+            'allowed_ports': config.allowed_ports,
+            'blocked_ips': config.blocked_ips
         }
     
-    def quick_test(self) -> Dict[str, Any]:
-        """Test rápido de capacidades de enrutamiento"""
-        print("\n" + "=" * 60)
-        print("KaliGhost 4.0 ULTIMATE - Network Routing Test")
-        print("=" * 60)
+    def emergency_isolate_all(self):
+        """Emergency isolation: move all tracked processes to isolated mode."""
+        with self.lock:
+            pids = list(self.process_routes.keys())
         
-        results = {
-            'timestamp': datetime.now().isoformat(),
-            'tests': []
-        }
+        for pid in pids:
+            try:
+                self.change_identity(pid, RoutingMode.ISOLATED)
+            except:
+                pass
         
-        # Test 1: Crear namespace
-        print("\n[Test 1] Creando network namespace...")
-        ns = self.create_namespace("test_ns")
-        results['tests'].append({
-            'name': 'namespace_creation',
-            'success': ns is not None
-        })
-        
-        # Test 2: Activar Tor
-        print("\n[Test 2] Iniciando Tor router...")
-        tor_success = self.tor_router.start()
-        results['tests'].append({
-            'name': 'tor_activation',
-            'success': tor_success,
-            'identity': self.tor_router.get_identity() if tor_success else None
-        })
-        
-        # Test 3: Configurar proxy chain
-        print("\n[Test 3] Configurando cadena de proxies...")
-        self.proxy_chain.add_proxy('socks5', '127.0.0.1', 1080)
-        self.proxy_chain.add_proxy('http', 'proxy.example.com', 8080)
-        chain_info = self.proxy_chain.get_chain_info()
-        results['tests'].append({
-            'name': 'proxy_chain',
-            'success': True,
-            'info': chain_info
-        })
-        
-        # Test 4: Asignar modo de red a proceso
-        print("\n[Test 4] Asignando modo Tor a proceso simulado...")
-        test_pid = 12345
-        mode_success = self.set_routing_mode(test_pid, 'tor')
-        results['tests'].append({
-            'name': 'process_routing',
-            'success': mode_success,
-            'pid': test_pid,
-            'mode': 'tor'
-        })
-        
-        # Test 5: Cambiar identidad
-        print("\n[Test 5] Cambiando identidad de red...")
-        identity_change = self.change_identity(test_pid)
-        results['tests'].append({
-            'name': 'identity_change',
-            'success': identity_change['success'],
-            'details': identity_change
-        })
-        
-        # Cleanup
-        print("\n[Cleanup] Eliminando namespace de test...")
-        self.delete_namespace("test_ns")
-        
-        # Resumen
-        total_tests = len(results['tests'])
-        passed_tests = sum(1 for t in results['tests'] if t['success'])
-        
-        print("\n" + "=" * 60)
-        print(f"RESULTADOS: {passed_tests}/{total_tests} tests pasados")
-        print("=" * 60)
-        
-        results['summary'] = {
-            'total_tests': total_tests,
-            'passed': passed_tests,
-            'failed': total_tests - passed_tests,
-            'success_rate': (passed_tests / total_tests * 100) if total_tests > 0 else 0
-        }
-        
-        return results
+        print("Emergency isolation completed")
     
-    def shutdown(self):
-        """Apaga todos los componentes de red"""
-        print("\n[*] Apagando Network Routing Engine...")
+    def cleanup(self):
+        """Cleanup all namespaces and stop services."""
+        with self.lock:
+            ns_list = list(self.process_routes.values())
         
-        # Detener Tor
-        self.tor_router.stop()
+        for ns_name in ns_list:
+            self.ns_manager.delete_namespace(ns_name)
         
-        # Eliminar todos los namespaces
-        for name in list(self.namespaces.keys()):
-            self.delete_namespace(name)
-            
-        # Limpiar rutas de procesos
-        self.process_routes.clear()
+        self.stop_tor()
         
-        print("[+] Network Routing Engine apagado correctamente")
+        with self.lock:
+            self.process_routes.clear()
 
 
-# Ejemplo de uso
-if __name__ == "__main__":
+# Convenience functions
+def run_through_tor(command: List[str]) -> Optional[subprocess.Popen]:
+    """Run a command through Tor network."""
     engine = DynamicRoutingEngine()
     
-    try:
-        # Ejecutar test rápido
-        results = engine.quick_test()
-        
-        print(f"\n✅ Network Routing Module inicializado correctamente")
-        print(f"📊 Tasa de éxito: {results['summary']['success_rate']:.1f}%")
-        
-    except KeyboardInterrupt:
-        print("\n[!] Interrumpido por usuario")
-    finally:
-        engine.shutdown()
+    if not engine.start_tor():
+        return None
+    
+    return engine.spawn_with_identity(command, RoutingMode.TOR)
+
+
+def run_through_proxy_chain(command: List[str], 
+                           proxies: List[ProxyConfig]) -> Optional[subprocess.Popen]:
+    """Run a command through a chain of proxies."""
+    engine = DynamicRoutingEngine()
+    return engine.spawn_with_identity(
+        command, 
+        RoutingMode.PROXY_CHAIN,
+        proxy_chain=proxies
+    )
+
+
+if __name__ == "__main__":
+    print("KaliGhost Per-Process Network Routing Module")
+    
+    engine = DynamicRoutingEngine()
+    
+    # Example: Start Tor
+    if engine.start_tor():
+        print("Tor started successfully")
+    
+    # Example: Run nmap through Tor
+    # process = engine.spawn_with_identity(
+    #     ['nmap', '-sT', 'example.com'],
+    #     RoutingMode.TOR
+    # )
+    
+    # Show identities
+    print("\nActive network identities:")
+    for pid, ns in engine.process_routes.items():
+        identity = engine.get_process_identity(pid)
+        if identity:
+            print(f"  PID {pid}: {identity['mode']} via {identity['namespace']}")
+    
+    # Cleanup
+    engine.cleanup()

@@ -1,729 +1,653 @@
 """
-KaliGhost 4.0 ULTIMATE - Emergency Response System
-Respuesta automática ante incidentes críticos
-Capacidades: Dead Man's Switch, Shamir Secret Sharing, Secure Wipe, Auto-destruction
+KaliGhost IDE - Dead Man's Switch and Secret Sharing Module
+Implements automatic trigger mechanisms and cryptographic secret sharing.
+Provides advanced persistence security and emergency response capabilities.
 """
 
 import os
 import sys
-import json
 import time
-import hashlib
 import secrets
+import hashlib
 import threading
-import subprocess
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from pathlib import Path
+import json
 import base64
-import hmac
+from typing import Dict, List, Optional, Tuple, Any, Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+
+@dataclass
+class ShareConfig:
+    """Configuration for secret sharing."""
+    total_shares: int
+    threshold: int
+    share_data: List[bytes]
 
 
 class ShamirSecretSharing:
     """
-    Implementación de Shamir's Secret Sharing para dividir secretos
-    Un secreto se divide en N partes, se requieren K partes para reconstruir
+    Implementation of Shamir's Secret Sharing scheme.
+    Splits secrets into multiple shares requiring a threshold to reconstruct.
     """
     
-    def __init__(self, prime: int = 2**256 - 189):
-        self.prime = prime  # Primo grande para aritmética modular
-        
-    def split_secret(self, secret: str, n_shares: int, k_threshold: int) -> List[Dict[str, Any]]:
+    def __init__(self, prime: int = None):
+        # Use a large prime for finite field arithmetic
+        self.prime = prime or (2**255 - 19)
+        self.backend = default_backend()
+    
+    def split_secret(self, secret: bytes, total_shares: int, 
+                    threshold: int) -> ShareConfig:
         """
-        Divide un secreto en N partes, requiriendo K partes para reconstruir
+        Split a secret into multiple shares.
         
         Args:
-            secret: El secreto a dividir (string)
-            n_shares: Número total de partes a crear
-            k_threshold: Número mínimo de partes necesarias para reconstruir
+            secret: The secret to split
+            total_shares: Total number of shares to create
+            threshold: Minimum shares needed to reconstruct
             
         Returns:
-            Lista de diccionarios con las partes del secreto
+            ShareConfig with all shares
         """
-        if k_threshold > n_shares:
-            raise ValueError("K threshold no puede ser mayor que N shares")
-        if k_threshold < 2:
-            raise ValueError("K threshold debe ser al menos 2")
-            
-        # Convertir secreto a número
-        secret_bytes = secret.encode('utf-8')
-        secret_int = int.from_bytes(secret_bytes, 'big')
+        if threshold > total_shares:
+            raise ValueError("Threshold cannot exceed total shares")
+        if threshold < 1:
+            raise ValueError("Threshold must be at least 1")
         
-        # Generar coeficientes aleatorios para el polinomio
-        coefficients = [secret_int] + [secrets.randbelow(self.prime) for _ in range(k_threshold - 1)]
+        # Convert secret to integer (big-endian)
+        secret_int = int.from_bytes(secret, 'big')
         
         shares = []
-        for i in range(1, n_shares + 1):
-            # Evaluar polinomio en x = i
-            y = 0
+        
+        for i in range(1, total_shares + 1):
+            # Generate random coefficients for polynomial
+            coefficients = [secret_int]
+            for _ in range(threshold - 1):
+                coefficients.append(secrets.randbelow(self.prime))
+            
+            # Evaluate polynomial at point i
+            share_value = 0
             for j, coef in enumerate(coefficients):
-                y = (y + coef * pow(i, j, self.prime)) % self.prime
+                share_value = (share_value + coef * pow(i, j, self.prime)) % self.prime
             
-            share = {
-                'share_id': i,
-                'x': i,
-                'y': hex(y),
-                'k_threshold': k_threshold,
-                'n_shares': n_shares,
-                'created_at': datetime.now().isoformat()
-            }
-            shares.append(share)
-            
-        print(f"[+] Secreto dividido en {n_shares} partes (umbral: {k_threshold})")
-        return shares
+            shares.append((i, share_value.to_bytes(32, 'big')))
+        
+        return ShareConfig(
+            total_shares=total_shares,
+            threshold=threshold,
+            share_data=[json.dumps({'index': s[0], 'value': base64.b64encode(s[1]).decode()}).encode() 
+                       for s in shares]
+        )
     
-    def reconstruct_secret(self, shares: List[Dict[str, Any]]) -> str:
+    def reconstruct_secret(self, shares: List[Tuple[int, bytes]], 
+                          threshold: int) -> Optional[bytes]:
         """
-        Reconstruye el secreto original a partir de K o más partes
+        Reconstruct the secret from shares using Lagrange interpolation.
         
         Args:
-            shares: Lista de partes del secreto (mínimo K partes)
+            shares: List of (index, value) tuples
+            threshold: Threshold used when splitting
             
         Returns:
-            El secreto original reconstruido
+            Reconstructed secret or None if failed
         """
-        if len(shares) < 2:
-            raise ValueError("Se necesitan al menos 2 partes para reconstruir")
-            
-        k = shares[0].get('k_threshold', len(shares))
-        if len(shares) < k:
-            raise ValueError(f"Se necesitan al menos {k} partes, solo se proporcionaron {len(shares)}")
+        if len(shares) < threshold:
+            print(f"Need at least {threshold} shares, got {len(shares)}")
+            return None
         
-        # Interpolación de Lagrange
-        secret_int = 0
+        # Convert shares to integers
+        points = []
+        for index, value in shares[:threshold]:
+            points.append((index, int.from_bytes(value, 'big')))
         
-        for i, share_i in enumerate(shares[:k]):
-            xi = share_i['x']
-            yi = int(share_i['y'], 16)
-            
+        # Lagrange interpolation
+        secret = 0
+        
+        for i, (xi, yi) in enumerate(points):
             numerator = 1
             denominator = 1
             
-            for j, share_j in enumerate(shares[:k]):
+            for j, (xj, _) in enumerate(points):
                 if i != j:
-                    xj = share_j['x']
-                    numerator = (numerator * (0 - xj)) % self.prime
+                    numerator = (numerator * (-xj)) % self.prime
                     denominator = (denominator * (xi - xj)) % self.prime
             
-            # Calcular inverso modular del denominador
-            denom_inv = pow(denominator, self.prime - 2, self.prime)
+            # Modular inverse using Fermat's little theorem
+            inv_denom = pow(denominator, self.prime - 2, self.prime)
+            lagrange_coef = (numerator * inv_denom) % self.prime
             
-            lagrange_coef = (numerator * denom_inv) % self.prime
-            term = (yi * lagrange_coef) % self.prime
-            secret_int = (secret_int + term) % self.prime
+            secret = (secret + yi * lagrange_coef) % self.prime
         
-        # Convertir número a bytes y luego a string
-        byte_length = (secret_int.bit_length() + 7) // 8
-        secret_bytes = secret_int.to_bytes(byte_length, 'big')
-        
-        # Eliminar padding null bytes
-        secret_bytes = secret_bytes.lstrip(b'\x00')
-        
+        # Convert back to bytes
         try:
-            return secret_bytes.decode('utf-8')
-        except UnicodeDecodeError:
-            return base64.b64encode(secret_bytes).decode('utf-8')
+            byte_length = (secret.bit_length() + 7) // 8
+            return secret.to_bytes(byte_length, 'big')
+        except:
+            return None
+    
+    def verify_share(self, share: bytes, public_params: Dict) -> bool:
+        """Verify if a share is valid (simplified verification)."""
+        try:
+            data = json.loads(share.decode())
+            return 'index' in data and 'value' in data
+        except:
+            return False
 
 
 class DeadMansSwitch:
     """
-    Dead Man's Switch - Disparador automático si el operador no responde
-    Múltiples triggers: tiempo, heartbeat, proceso, red
+    Dead Man's Switch implementation with multiple trigger conditions.
+    Automatically executes actions when triggers are activated.
     """
     
-    def __init__(self, trigger_time_minutes: int = 5):
-        self.trigger_time = timedelta(minutes=trigger_time_minutes)
-        self.last_heartbeat = datetime.now()
-        self.active = False
-        self.triggers = []
-        self.callbacks = []
-        self.monitor_thread = None
+    def __init__(self, switch_id: str = None):
+        self.switch_id = switch_id or secrets.token_hex(8)
+        self.triggers: Dict[str, Dict[str, Any]] = {}
+        self.actions: List[Callable] = []
+        self.is_active = False
+        self.last_check_time = None
+        self.check_interval = 60  # seconds
+        self.monitor_thread: Optional[threading.Thread] = None
+        self.lock = threading.Lock()
         
-    def add_trigger(self, trigger_type: str, **kwargs) -> bool:
+    def add_time_trigger(self, max_interval: int, 
+                        action: Callable,
+                        description: str = "No activity detected") -> str:
         """
-        Añade un trigger adicional
-        
-        Tipos:
-        - process: Se activa si un proceso específico deja de existir
-        - network: Se activa si se pierde conectividad a un host
-        - file: Se activa si un archivo es modificado/eliminado
-        - custom: Trigger personalizado con función callback
-        """
-        trigger = {
-            'type': trigger_type,
-            'params': kwargs,
-            'created_at': datetime.now().isoformat()
-        }
-        
-        if trigger_type == 'process':
-            trigger['pid'] = kwargs.get('pid')
-        elif trigger_type == 'network':
-            trigger['host'] = kwargs.get('host')
-            trigger['port'] = kwargs.get('port', 80)
-        elif trigger_type == 'file':
-            trigger['filepath'] = kwargs.get('filepath')
-        elif trigger_type == 'custom':
-            trigger['callback'] = kwargs.get('callback')
-            
-        self.triggers.append(trigger)
-        print(f"[+] Trigger '{trigger_type}' añadido")
-        return True
-    
-    def register_callback(self, callback_func) -> bool:
-        """Registra una función callback que se ejecutará cuando se active el switch"""
-        if callable(callback_func):
-            self.callbacks.append(callback_func)
-            print(f"[+] Callback registrado: {callback_func.__name__}")
-            return True
-        return False
-    
-    def heartbeat(self) -> None:
-        """Resetea el temporizador del Dead Man's Switch"""
-        self.last_heartbeat = datetime.now()
-        
-    def start(self) -> bool:
-        """Inicia el monitoreo del Dead Man's Switch"""
-        if self.active:
-            print("[!] Dead Man's Switch ya está activo")
-            return False
-            
-        self.active = True
-        self.last_heartbeat = datetime.now()
-        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
-        self.monitor_thread.start()
-        
-        print(f"[+] Dead Man's Switch activado (tiempo límite: {self.trigger_time.total_seconds()/60:.1f} min)")
-        return True
-    
-    def stop(self) -> bool:
-        """Detiene el monitoreo del Dead Man's Switch"""
-        self.active = False
-        if self.monitor_thread:
-            self.monitor_thread.join(timeout=2)
-        print("[-] Dead Man's Switch desactivado")
-        return True
-    
-    def _monitor_loop(self) -> None:
-        """Loop de monitoreo principal"""
-        while self.active:
-            time.sleep(1)  # Chequear cada segundo
-            
-            # Verificar timeout principal
-            elapsed = datetime.now() - self.last_heartbeat
-            if elapsed >= self.trigger_time:
-                print("\n[!!!] DEAD MAN'S SWITCH ACTIVADO - Timeout principal")
-                self._execute_callbacks()
-                break
-            
-            # Verificar triggers adicionales
-            for trigger in self.triggers:
-                if self._check_trigger(trigger):
-                    print(f"\n[!!!] DEAD MAN'S SWITCH ACTIVADO - Trigger: {trigger['type']}")
-                    self._execute_callbacks()
-                    self.active = False
-                    return
-    
-    def _check_trigger(self, trigger: Dict) -> bool:
-        """Verifica si un trigger específico se ha activado"""
-        trigger_type = trigger['type']
-        
-        if trigger_type == 'process':
-            pid = trigger.get('pid')
-            if pid:
-                try:
-                    os.kill(pid, 0)
-                    return False  # Proceso existe
-                except ProcessLookupError:
-                    return True  # Proceso no existe - ACTIVAR
-                    
-        elif trigger_type == 'network':
-            import socket
-            host = trigger.get('host')
-            port = trigger.get('port', 80)
-            if host:
-                try:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.settimeout(3)
-                    result = sock.connect_ex((host, port))
-                    sock.close()
-                    return result != 0  # No se puede conectar - ACTIVAR
-                except:
-                    return True  # Error de red - ACTIVAR
-                    
-        elif trigger_type == 'file':
-            filepath = trigger.get('filepath')
-            if filepath and not os.path.exists(filepath):
-                return True  # Archivo eliminado - ACTIVAR
-                
-        elif trigger_type == 'custom':
-            callback = trigger.get('callback')
-            if callback and callable(callback):
-                try:
-                    return callback()  # Si retorna True, ACTIVAR
-                except:
-                    return False
-                    
-        return False
-    
-    def _execute_callbacks(self) -> None:
-        """Ejecuta todos los callbacks registrados"""
-        print(f"[*] Ejecutando {len(self.callbacks)} callbacks...")
-        for callback in self.callbacks:
-            try:
-                callback()
-            except Exception as e:
-                print(f"[!] Error ejecutando callback: {e}")
-
-
-class SecureWiper:
-    """
-    Borrado seguro de archivos y discos
-    Múltiples passes de sobreescritura para eliminación forense
-    """
-    
-    def __init__(self, passes: int = 3):
-        self.passes = passes
-        # Patrones de sobreescritura (DoD 5220.22-M style)
-        self.patterns = [
-            b'\x00' * 4096,  # Ceros
-            b'\xFF' * 4096,  # Unos
-            b'\xAA' * 4096,  # Alternating 10101010
-            b'\x55' * 4096,  # Alternating 01010101
-            secrets.token_bytes(4096)  # Aleatorio
-        ]
-        
-    def wipe_file(self, filepath: str, secure: bool = True) -> Dict[str, Any]:
-        """
-        Borra de forma segura un archivo
+        Add a time-based trigger.
         
         Args:
-            filepath: Ruta del archivo a borrar
-            secure: Si True, usa múltiples passes de sobreescritura
+            max_interval: Maximum seconds between checks before triggering
+            action: Function to call when triggered
+            description: Description of the trigger
             
         Returns:
-            Diccionario con resultados de la operación
+            Trigger ID
         """
-        result = {
-            'filepath': filepath,
-            'success': False,
-            'method': 'secure' if secure else 'simple',
-            'passes_completed': 0,
-            'original_size': 0,
-            'timestamp': datetime.now().isoformat()
+        trigger_id = f"time_{secrets.token_hex(4)}"
+        
+        self.triggers[trigger_id] = {
+            'type': 'time',
+            'max_interval': max_interval,
+            'last_activity': time.time(),
+            'action': action,
+            'description': description,
+            'enabled': True
         }
         
-        if not os.path.exists(filepath):
-            result['error'] = 'File not found'
-            return result
-            
-        try:
-            original_size = os.path.getsize(filepath)
-            result['original_size'] = original_size
-            
-            if secure:
-                # Múltiples passes de sobreescritura
-                for i in range(min(self.passes, len(self.patterns))):
-                    pattern = self.patterns[i % len(self.patterns)]
-                    
-                    with open(filepath, 'wb') as f:
-                        for offset in range(0, original_size, len(pattern)):
-                            chunk = pattern[:min(len(pattern), original_size - offset)]
-                            f.write(chunk)
-                            f.flush()
-                            os.fsync(f.fileno())
-                    
-                    result['passes_completed'] = i + 1
-                    
-                # Rename antes de delete (más seguro)
-                temp_name = filepath + '.wipe_temp_' + secrets.token_hex(8)
-                os.rename(filepath, temp_name)
-                filepath = temp_name
-                
-            # Eliminación final
-            os.remove(filepath)
-            result['success'] = True
-            result['final_path'] = None
-            
-            print(f"[+] Archivo borrado de forma segura: {result['filepath']}")
-            
-        except Exception as e:
-            result['error'] = str(e)
-            print(f"[!] Error borrando archivo: {e}")
-            
-        return result
+        return trigger_id
     
-    def wipe_directory(self, dirpath: str, recursive: bool = True) -> Dict[str, Any]:
-        """Borra de forma segura todos los archivos en un directorio"""
-        result = {
-            'directory': dirpath,
-            'files_processed': 0,
-            'files_deleted': 0,
-            'errors': [],
-            'timestamp': datetime.now().isoformat()
+    def add_heartbeat_trigger(self, heartbeat_file: str,
+                             max_age: int,
+                             action: Callable,
+                             description: str = "Heartbeat lost") -> str:
+        """
+        Add a heartbeat file trigger.
+        
+        Args:
+            heartbeat_file: Path to heartbeat file
+            max_age: Maximum age in seconds before triggering
+            action: Function to call when triggered
+            description: Description of the trigger
+            
+        Returns:
+            Trigger ID
+        """
+        trigger_id = f"heartbeat_{secrets.token_hex(4)}"
+        
+        self.triggers[trigger_id] = {
+            'type': 'heartbeat',
+            'file': heartbeat_file,
+            'max_age': max_age,
+            'action': action,
+            'description': description,
+            'enabled': True
         }
         
-        if not os.path.isdir(dirpath):
-            result['error'] = 'Directory not found'
-            return result
+        return trigger_id
+    
+    def add_process_trigger(self, process_name: str,
+                           must_exist: bool = True,
+                           action: Callable = None,
+                           description: str = None) -> str:
+        """
+        Add a process existence trigger.
+        
+        Args:
+            process_name: Name of process to monitor
+            must_exist: If True, trigger when process disappears
+                       If False, trigger when process appears
+            action: Function to call when triggered
+            description: Description of the trigger
             
-        try:
-            if recursive:
-                for root, dirs, files in os.walk(dirpath, topdown=False):
-                    for filename in files:
-                        filepath = os.path.join(root, filename)
-                        result['files_processed'] += 1
-                        
-                        wipe_result = self.wipe_file(filepath)
-                        if wipe_result['success']:
-                            result['files_deleted'] += 1
-                        else:
-                            result['errors'].append({
-                                'file': filepath,
-                                'error': wipe_result.get('error', 'Unknown')
-                            })
-                            
-                    # Borrar directorios vacíos
-                    if root != dirpath:
-                        try:
-                            os.rmdir(root)
-                        except:
-                            pass
+        Returns:
+            Trigger ID
+        """
+        trigger_id = f"process_{secrets.token_hex(4)}"
+        
+        if not description:
+            desc_type = "disappeared" if must_exist else "appeared"
+            description = f"Process {process_name} {desc_type}"
+        
+        self.triggers[trigger_id] = {
+            'type': 'process',
+            'process_name': process_name,
+            'must_exist': must_exist,
+            'action': action,
+            'description': description,
+            'enabled': True
+        }
+        
+        return trigger_id
+    
+    def add_network_trigger(self, host: str, port: int,
+                           must_reachable: bool = True,
+                           action: Callable = None,
+                           description: str = None,
+                           timeout: int = 5) -> str:
+        """
+        Add a network reachability trigger.
+        
+        Args:
+            host: Host to monitor
+            port: Port to check
+            must_reachable: If True, trigger when unreachable
+                           If False, trigger when reachable
+            action: Function to call when triggered
+            description: Description of the trigger
+            timeout: Connection timeout in seconds
+            
+        Returns:
+            Trigger ID
+        """
+        trigger_id = f"network_{secrets.token_hex(4)}"
+        
+        if not description:
+            desc_type = "unreachable" if must_reachable else "reachable"
+            description = f"Host {host}:{port} became {desc_type}"
+        
+        self.triggers[trigger_id] = {
+            'type': 'network',
+            'host': host,
+            'port': port,
+            'must_reachable': must_reachable,
+            'timeout': timeout,
+            'action': action,
+            'description': description,
+            'enabled': True
+        }
+        
+        return trigger_id
+    
+    def register_action(self, action: Callable):
+        """Register a global action to execute on any trigger."""
+        self.actions.append(action)
+    
+    def reset_timer(self, trigger_id: str = None):
+        """Reset the timer for a time-based trigger."""
+        with self.lock:
+            if trigger_id:
+                if trigger_id in self.triggers:
+                    self.triggers[trigger_id]['last_activity'] = time.time()
             else:
-                for filename in os.listdir(dirpath):
-                    filepath = os.path.join(dirpath, filename)
-                    if os.path.isfile(filepath):
-                        result['files_processed'] += 1
-                        
-                        wipe_result = self.wipe_file(filepath)
-                        if wipe_result['success']:
-                            result['files_deleted'] += 1
-                        else:
-                            result['errors'].append({
-                                'file': filepath,
-                                'error': wipe_result.get('error', 'Unknown')
-                            })
-                            
-        except Exception as e:
-            result['error'] = str(e)
-            
-        print(f"[+] Directorio procesado: {result['files_deleted']}/{result['files_processed']} archivos borrados")
-        return result
+                # Reset all time triggers
+                for tid, trigger in self.triggers.items():
+                    if trigger['type'] == 'time':
+                        trigger['last_activity'] = time.time()
     
-    def quick_delete(self, filepath: str) -> bool:
-        """Eliminación rápida sin sobreescritura (menos seguro)"""
+    def start_monitoring(self):
+        """Start the monitoring thread."""
+        if self.is_active:
+            return
+        
+        self.is_active = True
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self.monitor_thread.start()
+    
+    def stop_monitoring(self):
+        """Stop the monitoring thread."""
+        self.is_active = False
+        if self.monitor_thread:
+            self.monitor_thread.join(timeout=5)
+            self.monitor_thread = None
+    
+    def _monitor_loop(self):
+        """Main monitoring loop."""
+        while self.is_active:
+            self._check_triggers()
+            time.sleep(self.check_interval)
+    
+    def _check_triggers(self):
+        """Check all triggers and execute actions if needed."""
+        current_time = time.time()
+        triggered = []
+        
+        with self.lock:
+            for trigger_id, trigger in self.triggers.items():
+                if not trigger['enabled']:
+                    continue
+                
+                should_trigger = False
+                
+                if trigger['type'] == 'time':
+                    elapsed = current_time - trigger['last_activity']
+                    if elapsed > trigger['max_interval']:
+                        should_trigger = True
+                        
+                elif trigger['type'] == 'heartbeat':
+                    try:
+                        file_mtime = os.path.getmtime(trigger['file'])
+                        age = current_time - file_mtime
+                        if age > trigger['max_age']:
+                            should_trigger = True
+                    except FileNotFoundError:
+                        should_trigger = True
+                        
+                elif trigger['type'] == 'process':
+                    process_exists = self._check_process_exists(trigger['process_name'])
+                    if trigger['must_exist'] and not process_exists:
+                        should_trigger = True
+                    elif not trigger['must_exist'] and process_exists:
+                        should_trigger = True
+                        
+                elif trigger['type'] == 'network':
+                    reachable = self._check_network_reachable(
+                        trigger['host'], 
+                        trigger['port'],
+                        trigger['timeout']
+                    )
+                    if trigger['must_reachable'] and not reachable:
+                        should_trigger = True
+                    elif not trigger['must_reachable'] and reachable:
+                        should_trigger = True
+                
+                if should_trigger:
+                    triggered.append(trigger)
+        
+        # Execute actions for triggered conditions
+        for trigger in triggered:
+            print(f"DMS Trigger activated: {trigger['description']}")
+            
+            # Execute trigger-specific action
+            if trigger.get('action'):
+                try:
+                    trigger['action']()
+                except Exception as e:
+                    print(f"Error executing trigger action: {e}")
+            
+            # Execute global actions
+            for action in self.actions:
+                try:
+                    action()
+                except Exception as e:
+                    print(f"Error executing global action: {e}")
+    
+    def _check_process_exists(self, process_name: str) -> bool:
+        """Check if a process exists by name."""
         try:
-            os.remove(filepath)
-            print(f"[-] Archivo eliminado (rápido): {filepath}")
-            return True
-        except Exception as e:
-            print(f"[!] Error en eliminación rápida: {e}")
+            import subprocess
+            result = subprocess.run(
+                ['pgrep', '-f', process_name],
+                capture_output=True
+            )
+            return result.returncode == 0
+        except:
             return False
+    
+    def _check_network_reachable(self, host: str, port: int, 
+                                timeout: int) -> bool:
+        """Check if a host:port is reachable."""
+        try:
+            socket_conn = __import__('socket').socket()
+            socket_conn.settimeout(timeout)
+            result = socket_conn.connect_ex((host, port))
+            socket_conn.close()
+            return result == 0
+        except:
+            return False
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current status of the dead man's switch."""
+        with self.lock:
+            return {
+                'switch_id': self.switch_id,
+                'is_active': self.is_active,
+                'trigger_count': len(self.triggers),
+                'triggers': [
+                    {
+                        'id': tid,
+                        'type': t['type'],
+                        'description': t['description'],
+                        'enabled': t['enabled']
+                    }
+                    for tid, t in self.triggers.items()
+                ],
+                'action_count': len(self.actions)
+            }
 
 
 class EmergencyResponseSystem:
     """
-    Sistema principal de respuesta de emergencia
-    Coordina Dead Man's Switch, Secret Sharing y Secure Wipe
+    Coordinates emergency responses including secret destruction,
+    data wiping, and alert notifications.
     """
     
     def __init__(self):
-        self.dms = DeadMansSwitch(trigger_time_minutes=5)
-        self.shamir = ShamirSecretSharing()
-        self.wiper = SecureWiper(passes=3)
-        self.secrets = {}
-        self.emergency_contacts = []
-        self.response_plan = {}
+        self.dms = DeadMansSwitch()
+        self.sss = ShamirSecretSharing()
+        self.response_actions: Dict[str, Callable] = {}
+        self.secret_shares: Dict[str, ShareConfig] = {}
         
-    def store_secret(self, name: str, secret: str, 
-                     n_shares: int = 5, k_threshold: int = 3) -> List[Dict[str, Any]]:
-        """Almacena un secreto dividiéndolo con Shamir's Secret Sharing"""
-        shares = self.shamir.split_secret(secret, n_shares, k_threshold)
-        self.secrets[name] = {
-            'shares': shares,
-            'n_shares': n_shares,
-            'k_threshold': k_threshold,
-            'stored_at': datetime.now().isoformat()
-        }
-        print(f"[+] Secreto '{name}' almacenado ({n_shares} partes, umbral {k_threshold})")
+    def setup_standard_protection(self, wipe_paths: List[str] = None,
+                                 notification_webhook: str = None) -> DeadMansSwitch:
+        """
+        Set up standard protection with common triggers.
+        
+        Args:
+            wipe_paths: Paths to wipe on trigger
+            notification_webhook: Webhook URL for notifications
+            
+        Returns:
+            Configured DeadMansSwitch
+        """
+        dms = DeadMansSwitch()
+        
+        # Time trigger - no activity for 30 minutes
+        def emergency_wipe():
+            if wipe_paths:
+                self._secure_wipe_paths(wipe_paths)
+            if notification_webhook:
+                self._send_notification(notification_webhook, "Emergency wipe initiated")
+        
+        dms.add_time_trigger(
+            max_interval=1800,  # 30 minutes
+            action=emergency_wipe,
+            description="No operator activity for 30 minutes"
+        )
+        
+        # Heartbeat trigger
+        dms.add_heartbeat_trigger(
+            heartbeat_file="/tmp/kalighost_heartbeat",
+            max_age=300,  # 5 minutes
+            action=emergency_wipe,
+            description="Heartbeat signal lost"
+        )
+        
+        # Process trigger - panic if terminal closes
+        dms.add_process_trigger(
+            process_name="kalighost_session",
+            must_exist=True,
+            action=emergency_wipe,
+            description="KaliGhost session terminated unexpectedly"
+        )
+        
+        self.dms = dms
+        return dms
+    
+    def split_critical_secret(self, secret: bytes, locations: List[str],
+                             threshold: int = None) -> ShareConfig:
+        """
+        Split a critical secret and distribute shares.
+        
+        Args:
+            secret: The secret to split
+            locations: Where to store each share
+            threshold: Reconstruction threshold (default: len(locations)//2 + 1)
+            
+        Returns:
+            ShareConfig with all shares
+        """
+        if threshold is None:
+            threshold = len(locations) // 2 + 1
+        
+        shares = self.sss.split_secret(secret, len(locations), threshold)
+        
+        # Store shares in specified locations
+        for i, location in enumerate(locations):
+            try:
+                with open(location, 'wb') as f:
+                    f.write(shares.share_data[i])
+                os.chmod(location, 0o600)
+            except Exception as e:
+                print(f"Error storing share at {location}: {e}")
+        
         return shares
     
-    def retrieve_secret(self, name: str, provided_shares: List[Dict]) -> Optional[str]:
-        """Recupera un secreto usando las partes proporcionadas"""
-        if name not in self.secrets:
-            print(f"[!] Secreto '{name}' no encontrado")
-            return None
-            
-        try:
-            secret = self.shamir.reconstruct_secret(provided_shares)
-            print(f"[+] Secreto '{name}' recuperado exitosamente")
-            return secret
-        except Exception as e:
-            print(f"[!] Error recuperando secreto: {e}")
-            return None
-    
-    def configure_dms(self, trigger_time_minutes: int = 5,
-                      process_watch: Optional[int] = None,
-                      network_watch: Optional[Tuple[str, int]] = None,
-                      file_watch: Optional[str] = None) -> bool:
-        """Configura el Dead Man's Switch con múltiples triggers"""
-        self.dms = DeadMansSwitch(trigger_time_minutes)
+    def recover_secret(self, share_paths: List[str], 
+                      threshold: int) -> Optional[bytes]:
+        """
+        Recover a secret from stored shares.
         
-        if process_watch:
-            self.dms.add_trigger('process', pid=process_watch)
+        Args:
+            share_paths: Paths to share files
+            threshold: Required threshold
             
-        if network_watch:
-            host, port = network_watch
-            self.dms.add_trigger('network', host=host, port=port)
-            
-        if file_watch:
-            self.dms.add_trigger('file', filepath=file_watch)
-            
-        print(f"[+] Dead Man's Switch configurado")
-        return True
-    
-    def add_emergency_contact(self, contact_info: Dict[str, Any]) -> bool:
-        """Añade un contacto de emergencia para notificaciones"""
-        self.emergency_contacts.append({
-            'info': contact_info,
-            'added_at': datetime.now().isoformat()
-        })
-        print(f"[+] Contacto de emergencia añadido")
-        return True
-    
-    def create_response_plan(self, plan: Dict[str, Any]) -> bool:
-        """Crea un plan de respuesta de emergencia"""
-        self.response_plan = {
-            'plan': plan,
-            'created_at': datetime.now().isoformat()
-        }
-        print(f"[+] Plan de respuesta creado")
-        return True
-    
-    def execute_emergency_protocol(self) -> Dict[str, Any]:
-        """Ejecuta el protocolo de emergencia completo"""
-        print("\n" + "=" * 60)
-        print("!!! PROTOCOLO DE EMERGENCIA ACTIVADO !!!")
-        print("=" * 60)
+        Returns:
+            Recovered secret or None
+        """
+        shares = []
         
-        results = {
-            'timestamp': datetime.now().isoformat(),
-            'actions_taken': [],
-            'secrets_secured': [],
-            'files_wiped': [],
-            'notifications_sent': []
-        }
+        for path in share_paths[:threshold]:
+            try:
+                with open(path, 'rb') as f:
+                    share_data = f.read()
+                data = json.loads(share_data.decode())
+                index = data['index']
+                value = base64.b64decode(data['value'])
+                shares.append((index, value))
+            except Exception as e:
+                print(f"Error reading share from {path}: {e}")
+                return None
         
-        # 1. Notificar contactos de emergencia
-        print("\n[1/4] Notificando contactos de emergencia...")
-        for contact in self.emergency_contacts:
-            # En producción, enviar email/SMS/webhook real
-            notification = {
-                'contact': contact['info'],
-                'message': 'EMERGENCY PROTOCOL ACTIVATED',
-                'sent_at': datetime.now().isoformat()
-            }
-            results['notifications_sent'].append(notification)
-            print(f"  → Notificación enviada a: {contact['info'].get('name', 'Unknown')}")
-            
-        # 2. Asegurar secretos (eliminar copias locales)
-        print("\n[2/4] Asegurando secretos...")
-        for name, secret_data in list(self.secrets.items()):
-            # Eliminar copias locales del secreto
-            self.secrets.pop(name, None)
-            results['secrets_secured'].append(name)
-            print(f"  → Secreto '{name}' asegurado (copias locales eliminadas)")
-            
-        # 3. Wipe de archivos sensibles
-        print("\n[3/4] Borrado seguro de archivos sensibles...")
-        sensitive_paths = [
-            '/tmp/kalighost_keys',
-            '/tmp/kalighost_credentials',
-            os.path.expanduser('~/.kalighost/secrets')
-        ]
-        
-        for path in sensitive_paths:
-            if os.path.exists(path):
+        return self.sss.reconstruct_secret(shares, threshold)
+    
+    def _secure_wipe_paths(self, paths: List[str]):
+        """Securely wipe specified paths."""
+        for path in paths:
+            try:
                 if os.path.isfile(path):
-                    result = self.wiper.wipe_file(path)
-                else:
-                    result = self.wiper.wipe_directory(path)
-                    
-                if result.get('success', False):
-                    results['files_wiped'].append(path)
-                    print(f"  → {path} borrado de forma segura")
-                    
-        # 4. Ejecutar plan de respuesta personalizado
-        print("\n[4/4] Ejecutando plan de respuesta...")
-        if self.response_plan:
-            actions = self.response_plan.get('plan', {}).get('actions', [])
-            for action in actions:
-                action_type = action.get('type')
+                    self._secure_wipe_file(path)
+                elif os.path.isdir(path):
+                    import shutil
+                    shutil.rmtree(path, ignore_errors=True)
+            except Exception as e:
+                print(f"Error wiping {path}: {e}")
+    
+    def _secure_wipe_file(self, filepath: str, passes: int = 3):
+        """Securely wipe a file with multiple overwrite passes."""
+        try:
+            file_size = os.path.getsize(filepath)
+            
+            with open(filepath, 'r+b') as f:
+                # Pass 1: Write zeros
+                f.seek(0)
+                f.write(b'\x00' * file_size)
+                f.flush()
+                os.fsync(f.fileno())
                 
-                if action_type == 'shutdown_services':
-                    # Simular shutdown de servicios
-                    results['actions_taken'].append('services_shutdown')
-                    print(f"  → Servicios detenidos")
-                    
-                elif action_type == 'destroy_evidence':
-                    paths = action.get('paths', [])
-                    for path in paths:
-                        if os.path.exists(path):
-                            self.wiper.wipe_file(path) if os.path.isfile(path) else self.wiper.wipe_directory(path)
-                    results['actions_taken'].append('evidence_destroyed')
-                    print(f"  → Evidencia destruida")
-                    
-                elif action_type == 'send_alert':
-                    webhook = action.get('webhook')
-                    if webhook:
-                        # En producción, enviar POST request real
-                        results['actions_taken'].append(f'alert_sent_to_{hashlib.md5(webhook.encode()).hexdigest()[:8]}')
-                        print(f"  → Alerta enviada")
-                        
-        print("\n" + "=" * 60)
-        print("PROTOCOLO DE EMERGENCIA COMPLETADO")
-        print("=" * 60)
-        
-        return results
-    
-    def start_monitoring(self) -> bool:
-        """Inicia el monitoreo del Dead Man's Switch"""
-        # Registrar callback para protocolo de emergencia
-        self.dms.register_callback(self.execute_emergency_protocol)
-        
-        return self.dms.start()
-    
-    def stop_monitoring(self) -> bool:
-        """Detiene el monitoreo"""
-        return self.dms.stop()
-    
-    def heartbeat(self) -> None:
-        """Envía heartbeat al Dead Man's Switch"""
-        self.dms.heartbeat()
-        
-    def get_status(self) -> Dict[str, Any]:
-        """Obtiene el estado actual del sistema de emergencia"""
-        return {
-            'dms_active': self.dms.active,
-            'last_heartbeat': self.dms.last_heartbeat.isoformat() if self.dms.last_heartbeat else None,
-            'triggers_configured': len(self.dms.triggers),
-            'secrets_stored': len(self.secrets),
-            'emergency_contacts': len(self.emergency_contacts),
-            'response_plan_configured': bool(self.response_plan),
-            'timestamp': datetime.now().isoformat()
-        }
-    
-    def quick_test(self) -> Dict[str, Any]:
-        """Test rápido del sistema de emergencia"""
-        print("\n" + "=" * 60)
-        print("KaliGhost 4.0 ULTIMATE - Emergency Response Test")
-        print("=" * 60)
-        
-        results = {
-            'timestamp': datetime.now().isoformat(),
-            'tests': []
-        }
-        
-        # Test 1: Shamir Secret Sharing
-        print("\n[Test 1] Probando Shamir Secret Sharing...")
-        test_secret = "SUPER_SECRET_KEY_12345"
-        shares = self.store_secret("test_key", test_secret, n_shares=5, k_threshold=3)
-        
-        # Reconstruir con 3 shares
-        reconstructed = self.retrieve_secret("test_key", shares[:3])
-        test1_pass = reconstructed == test_secret
-        results['tests'].append({
-            'name': 'shamir_secret_sharing',
-            'success': test1_pass,
-            'reconstructed': reconstructed == test_secret
-        })
-        print(f"  Resultado: {'✅ PASS' if test1_pass else '❌ FAIL'}")
-        
-        # Test 2: Dead Man's Switch (simulado, sin espera real)
-        print("\n[Test 2] Configurando Dead Man's Switch...")
-        self.configure_dms(
-            trigger_time_minutes=1,  # 1 minuto para test
-            process_watch=None,
-            network_watch=('8.8.8.8', 53),
-            file_watch='/nonexistent_file_trigger'
-        )
-        test2_pass = self.dms.active == False  # Aún no iniciado
-        results['tests'].append({
-            'name': 'dms_configuration',
-            'success': True,
-            'triggers': len(self.dms.triggers)
-        })
-        print(f"  Triggers configurados: {len(self.dms.triggers)}")
-        
-        # Test 3: Secure Wipe
-        print("\n[Test 3] Probando Secure Wipe...")
-        test_file = "/tmp/test_wipe_file.txt"
-        with open(test_file, 'w') as f:
-            f.write("SENSITIVE_DATA_" * 100)
+                # Pass 2: Write ones
+                f.seek(0)
+                f.write(b'\xFF' * file_size)
+                f.flush()
+                os.fsync(f.fileno())
+                
+                # Pass 3: Write random
+                if passes >= 3:
+                    f.seek(0)
+                    f.write(secrets.token_bytes(file_size))
+                    f.flush()
+                    os.fsync(f.fileno())
             
-        wipe_result = self.wiper.wipe_file(test_file, secure=True)
-        test3_pass = wipe_result['success'] and not os.path.exists(test_file)
-        results['tests'].append({
-            'name': 'secure_wipe',
-            'success': test3_pass,
-            'passes': wipe_result.get('passes_completed', 0)
-        })
-        print(f"  Archivo borrado: {test3_pass}, Passes: {wipe_result.get('passes_completed', 0)}")
-        
-        # Test 4: Emergency Protocol (simulado)
-        print("\n[Test 4] Simulando protocolo de emergencia...")
-        self.add_emergency_contact({'name': 'Admin', 'email': 'admin@example.com'})
-        self.create_response_plan({
-            'actions': [
-                {'type': 'shutdown_services'},
-                {'type': 'destroy_evidence', 'paths': ['/tmp/test_evidence']}
-            ]
-        })
-        
-        # Ejecutar protocolo (no activará DMS real)
-        protocol_result = self.execute_emergency_protocol()
-        test4_pass = len(protocol_result['notifications_sent']) > 0
-        results['tests'].append({
-            'name': 'emergency_protocol',
-            'success': test4_pass,
-            'actions': len(protocol_result['actions_taken'])
-        })
-        
-        # Resumen
-        total_tests = len(results['tests'])
-        passed_tests = sum(1 for t in results['tests'] if t['success'])
-        
-        print("\n" + "=" * 60)
-        print(f"RESULTADOS: {passed_tests}/{total_tests} tests pasados")
-        print("=" * 60)
-        
-        results['summary'] = {
-            'total_tests': total_tests,
-            'passed': passed_tests,
-            'failed': total_tests - passed_tests,
-            'success_rate': (passed_tests / total_tests * 100) if total_tests > 0 else 0
-        }
-        
-        return results
+            # Delete file
+            os.remove(filepath)
+            
+        except Exception as e:
+            print(f"Error secure wiping {filepath}: {e}")
+    
+    def _send_notification(self, webhook_url: str, message: str):
+        """Send notification to webhook."""
+        try:
+            import requests
+            requests.post(webhook_url, json={'message': message}, timeout=10)
+        except Exception as e:
+            print(f"Error sending notification: {e}")
 
 
-# Ejemplo de uso
+# Singleton instance
+_emergency_system: Optional[EmergencyResponseSystem] = None
+
+
+def get_emergency_system() -> EmergencyResponseSystem:
+    """Get or create emergency response system singleton."""
+    global _emergency_system
+    if _emergency_system is None:
+        _emergency_system = EmergencyResponseSystem()
+    return _emergency_system
+
+
 if __name__ == "__main__":
-    system = EmergencyResponseSystem()
+    print("KaliGhost Dead Man's Switch and Secret Sharing Module")
     
-    try:
-        # Ejecutar test rápido
-        results = system.quick_test()
-        
-        print(f"\n✅ Emergency Response Module inicializado correctamente")
-        print(f"📊 Tasa de éxito: {results['summary']['success_rate']:.1f}%")
-        
-        # Mostrar estado final
-        print(f"\n📋 Estado del sistema:")
-        status = system.get_status()
-        for key, value in status.items():
-            print(f"  • {key}: {value}")
-            
-    except KeyboardInterrupt:
-        print("\n[!] Interrumpido por usuario")
-    finally:
-        system.stop_monitoring()
+    # Test Shamir Secret Sharing
+    sss = ShamirSecretSharing()
+    secret = b"SuperSecretKey1234567890"
+    
+    print("\n=== Testing Secret Sharing ===")
+    shares = sss.split_secret(secret, 5, 3)
+    print(f"Split secret into {shares.total_shares} shares (threshold: {shares.threshold})")
+    
+    # Reconstruct with 3 shares
+    selected_shares = []
+    for i in range(3):
+        data = json.loads(shares.share_data[i].decode())
+        selected_shares.append((data['index'], base64.b64decode(data['value'])))
+    
+    recovered = sss.reconstruct_secret(selected_shares, 3)
+    print(f"Recovered secret: {recovered}")
+    print(f"Match: {recovered == secret}")
+    
+    # Test Dead Man's Switch
+    print("\n=== Testing Dead Man's Switch ===")
+    dms = DeadMansSwitch()
+    
+    def test_action():
+        print(">>> TRIGGER ACTIVATED! <<<")
+    
+    dms.add_time_trigger(10, test_action, "Test timer")
+    dms.start_monitoring()
+    
+    print(f"DMS Status: {dms.get_status()}")
+    print("Monitoring started (will trigger in 10 seconds without reset)")
+    
+    # Reset once to demonstrate
+    time.sleep(3)
+    dms.reset_timer()
+    print("Timer reset!")
+    
+    time.sleep(5)
+    dms.stop_monitoring()
+    print("Monitoring stopped")
