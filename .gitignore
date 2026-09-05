@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/*.log
+logs/*_session.log
+
+# Sensitive
+.env
+.env.local
+*.key
+*.pem
+*.crt
+passphrases.txt
+
+# Encrypted volumes
+*.enc
+.volumes/
+
+# AI models (large files)
+yrays-agent/models/*.bin
+yrays-agent/models/*.gguf
+yrays-agent/models/*.pt
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Test artifacts
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker
+docker-compose.override.yml
+
+# Project specific
+workspaces/
+sandboxes/
+malware_samples/
+captures/

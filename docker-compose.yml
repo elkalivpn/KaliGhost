@@ -1,0 +1,116 @@
+# Docker Compose for KaliGhost IDE
+# Provides containerized environment with all dependencies
+
+version: '3.8'
+
+services:
+  # Main IDE backend
+  kalighost-backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: kalighost-backend
+    ports:
+      - "8080:8080"  # API
+      - "8081:8081"  # WebSocket
+    volumes:
+      - ./workspaces:/root/.kalighost/workspaces
+      - ./logs:/workspace/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - KALIGHOST_MODE=standard
+      - LOG_LEVEL=INFO
+      - ENABLE_AGENT=true
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - kalighost-net
+    restart: unless-stopped
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: kalighost-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - kalighost-net
+    restart: unless-stopped
+
+  # PostgreSQL for persistent storage (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: kalighost-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=kalighost
+      - POSTGRES_USER=kalighost
+      - POSTGRES_PASSWORD=changeme_in_production
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - kalighost-net
+    restart: unless-stopped
+    profiles:
+      - with-db
+
+  # AI Agent service (optional, requires GPU)
+  kalighost-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    container_name: kalighost-agent
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./yrays-agent/models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - MODEL_PATH=/models/uncensored-v1.gguf
+      - GPU_ENABLED=true
+    networks:
+      - kalighost-net
+    restart: unless-stopped
+    profiles:
+      - with-gpu
+
+  # Web GUI (Electron app served via noVNC)
+  kalighost-gui:
+    build:
+      context: ./gui
+      dockerfile: ../docker/Dockerfile.gui
+    container_name: kalighost-gui
+    ports:
+      - "3000:3000"  # Web interface
+      - "5900:5900"  # VNC
+    environment:
+      - BACKEND_URL=http://kalighost-backend:8080
+      - WS_URL=ws://kalighost-backend:8081
+    depends_on:
+      - kalighost-backend
+    networks:
+      - kalighost-net
+    restart: unless-stopped
+
+networks:
+  kalighost-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  redis-data:
+  postgres-data:

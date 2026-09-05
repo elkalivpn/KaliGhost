@@ -1,0 +1,63 @@
+# KaliGhost IDE Requirements
+# Python 3.10+ required
+# Security-hardened versions - All CVEs patched
+
+# Core dependencies (CVEs patched)
+aiohttp>=3.11.10  # Fixed: DoS, zip bomb, header bypass, trailer limits
+cryptography>=44.0.0  # Fixed: Bleichenbacher, subgroup attack, null pointer
+docker>=7.1.0
+psutil>=6.1.0
+
+# AI/ML dependencies (optional)
+# llama-cpp-python>=0.2.0  # For local LLM inference
+# torch>=2.0.0  # For GPU acceleration
+# transformers>=4.30.0  # HuggingFace models
+
+# Security tools integration
+# python-nmap>=0.7.1  # Nmap integration
+# scapy>=2.5.0  # Packet manipulation
+# pwntools>=4.11.0  # Exploit development
+
+# Web framework
+# flask>=3.0.0  # Alternative web server
+# fastapi>=0.100.0  # Modern API framework
+
+# Database (optional)
+# sqlalchemy>=2.0.0
+# redis>=4.5.0
+
+# Testing
+pytest>=8.3.4
+pytest-asyncio>=0.24.0
+pytest-cov>=6.0.0
+
+# Development (CVE patched)
+black>=24.10.0  # Fixed: Arbitrary file write vulnerability
+
+# Utilities
+python-dotenv>=1.0.1
+click>=8.1.7
+rich>=13.9.0  # Beautiful terminal output
+tqdm>=4.67.1  # Progress bars
+
+# Encryption and security (CVE patched)
+pycryptodome>=3.21.0  # Fixed: OAEP side-channel leakage
+paramiko>=3.5.0  # SSH support
+
+# File handling
+pyyaml>=6.0.2
+jsonschema>=4.23.0
+
+# Network (with secure urllib3)
+requests>=2.32.3  # Bundles urllib3>=2.2.3 (all CVEs fixed)
+websockets>=14.1
+
+# System monitoring
+# psutil already listed above
+
+# Logging
+# Built-in logging is sufficient, but can add:
+# colorlog>=6.7.0
+
+# Additional security hardening
+urllib3>=2.2.3  # Explicit: Fixed all decompression bomb, redirect CVEs
