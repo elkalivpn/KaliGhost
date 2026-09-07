@@ -170,7 +170,7 @@ class KalighostCore:
     def load_agent(self, model: str = 'uncensored-v1', gpu: bool = False) -> bool:
         """Load AI agent with specified model"""
         try:
-            from yrays-agent.core import YraysAgent
+            from yrays_agent.core import YraysAgent
             
             self.agent = YraysAgent(model=model, gpu=gpu)
             if self.agent.load():
